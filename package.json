@@ -1,6 +1,6 @@
 {
 	"name": "astro-front",
-	"description": "Build a personal website, blog, or portfolio with Astro.",
+	"description": "3DreamLab agency one-pager on Astro and Cloudflare Workers.",
 	"cloudflare": {
 		"label": "Astro Framework Starter",
 		"products": [
@@ -13,10 +13,9 @@
 	},
 	"dependencies": {
 		"@astrojs/cloudflare": "12.6.12",
-		"@astrojs/mdx": "4.3.13",
-		"@astrojs/rss": "4.0.14",
 		"@astrojs/sitemap": "3.6.1",
 		"astro": "5.16.9",
+		"resend": "^4.0.0",
 		"typescript": "5.9.3"
 	},
 	"devDependencies": {

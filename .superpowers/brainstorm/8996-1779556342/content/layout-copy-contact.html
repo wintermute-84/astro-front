@@ -1,0 +1,97 @@
+<h2>Refined layout — Option C, shorter sections</h2>
+<p class="subtitle">~55–65vh per section · editorial brutalist · scroll to preview the full page flow</p>
+
+<div class="mockup" style="max-width:420px;margin:0 auto">
+  <div class="mockup-header">Page scroll preview — 3DreamLab</div>
+  <div class="mockup-body" style="padding:0;max-height:520px;overflow-y:auto;background:#111">
+
+    <!-- Section 1: Hero -->
+    <div style="min-height:200px;background:linear-gradient(rgba(245,245,245,.82),rgba(245,245,245,.82)),#bcbcbc;padding:28px 24px;display:flex;flex-direction:column;justify-content:space-between;font-family:system-ui,sans-serif;position:relative">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <span style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#333">3DREAMLAB</span>
+        <span style="font-size:8px;font-family:monospace;color:#888">#F5F5F5 · LIGHT.jpg</span>
+      </div>
+      <div>
+        <h3 style="margin:0;font-size:36px;font-weight:900;line-height:.85;letter-spacing:-.04em;color:#111">FAST<br/>COMMERCE</h3>
+        <p style="margin:12px 0 0;font-size:11px;color:#444;max-width:220px;line-height:1.5">Lightning-fast e-commerce sites. Zero bloat. Built to convert.</p>
+      </div>
+      <span style="font-size:8px;color:#999;letter-spacing:.1em">↓ SCROLL</span>
+    </div>
+
+    <!-- Section 2: Red services -->
+    <div style="min-height:220px;background:#ff2400;padding:28px 24px;font-family:system-ui,sans-serif;position:relative;display:flex;flex-direction:column;justify-content:space-between">
+      <span style="font-size:8px;font-family:monospace;color:rgba(0,0,0,.45);position:absolute;top:16px;right:20px">#FF2400</span>
+      <h3 style="margin:0;font-size:32px;font-weight:900;line-height:.85;letter-spacing:-.03em;color:#111">WHAT<br/>WE DO</h3>
+      <div style="margin-top:20px;border-top:1px solid rgba(0,0,0,.25)">
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.15);font-size:10px;font-weight:600;color:#111"><span>A</span><span>E-commerce storefronts</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.15);font-size:10px;font-weight:600;color:#111"><span>B</span><span>Payment &amp; checkout integrations</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.15);font-size:10px;font-weight:600;color:#111"><span>C</span><span>ERP · CRM · inventory sync</span></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:10px;font-weight:600;color:#111"><span>D</span><span>Headless &amp; custom builds</span></div>
+      </div>
+    </div>
+
+    <!-- Section 3: Dark infra -->
+    <div style="min-height:200px;background:linear-gradient(rgba(0,0,0,.72),rgba(0,0,0,.72)),#333;padding:28px 24px;font-family:system-ui,sans-serif;display:flex;flex-direction:column;justify-content:space-between;position:relative">
+      <span style="font-size:8px;font-family:monospace;color:rgba(255,255,255,.35);position:absolute;top:16px;right:20px">HEAD.jpeg · edge</span>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div>
+          <h3 style="margin:0;font-size:28px;font-weight:900;line-height:.85;letter-spacing:-.03em;color:#fff">EDGE<br/>INFRA</h3>
+          <p style="margin:10px 0 0;font-size:10px;color:rgba(255,255,255,.55);max-width:180px;line-height:1.5">Cloudflare Workers, CDN, D1, R2. Global performance out of the box.</p>
+        </div>
+        <div style="text-align:right;font-size:8px;font-family:monospace;color:rgba(255,255,255,.4);line-height:1.6">
+          latency &lt;50ms<br/>
+          300+ PoPs<br/>
+          100/100 LH
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Contact -->
+    <div style="min-height:100px;background:#0a0a0a;padding:24px;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <span style="font-size:9px;color:#666;letter-spacing:.1em;display:block;margin-bottom:6px">READY?</span>
+        <span style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em">Let's build →</span>
+      </div>
+      <span style="font-size:9px;color:#ff2400;font-family:monospace">hello@3dreamlab.com</span>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px">
+  <h3>Design notes (locked in)</h3>
+  <ul style="font-size:14px;line-height:1.8;color:var(--text-secondary)">
+    <li><strong>Layout:</strong> Editorial asymmetric (C), sections ~55–65vh (not full-screen)</li>
+    <li><strong>Typography:</strong> Bold condensed sans for headings, monospace for metadata accents</li>
+    <li><strong>Animations:</strong> Fade-up headings on scroll, subtle parallax on background images</li>
+    <li><strong>Nav:</strong> Fixed minimal — logo top-left, "Contact" anchor top-right (transparent → solid on scroll)</li>
+    <li><strong>Cleanup:</strong> Remove blog, about, RSS, MDX content collections; keep BaseHead + Cloudflare adapter</li>
+  </ul>
+</div>
+
+<h3 style="margin-top:32px">How should visitors reach you?</h3>
+<p class="subtitle">Click one option — this sets the contact section behavior</p>
+
+<div class="options">
+  <div class="option" data-choice="mailto" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Email link</h3>
+      <p>Display email + mailto: link. Simplest, no backend needed.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="display" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Email display only</h3>
+      <p>Show address as text, user copies manually. Avoids spam scrapers slightly.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="external" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>External link</h3>
+      <p>Button links to Calendly, Typeform, or another URL you provide.</p>
+    </div>
+  </div>
+</div>

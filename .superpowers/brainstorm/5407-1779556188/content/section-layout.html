@@ -1,0 +1,89 @@
+<h2>One-pager section structure</h2>
+<p class="subtitle">Which scroll experience fits the agency vibe? Click to select — we'll refine from there.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;background:#111;overflow:hidden">
+      <div style="height:280px;display:flex;flex-direction:column;font-family:system-ui,sans-serif">
+        <div style="flex:1;background:linear-gradient(rgba(188,188,188,.9),rgba(188,188,188,.9)),#bcbcbc;display:flex;align-items:flex-end;padding:12px;min-height:56px">
+          <span style="font-size:11px;font-weight:800;letter-spacing:-.02em;color:#111;line-height:1">FAST<br/>COMMERCE</span>
+        </div>
+        <div style="flex:1.2;background:#ff2400;display:flex;align-items:center;padding:12px;min-height:68px">
+          <span style="font-size:14px;font-weight:900;color:#111;line-height:.9;letter-spacing:-.03em">EDGE<br/>INFRA</span>
+        </div>
+        <div style="flex:1;background:linear-gradient(rgba(0,0,0,.65),rgba(0,0,0,.65)),#333;display:flex;align-items:flex-end;justify-content:flex-end;padding:12px;min-height:56px">
+          <span style="font-size:10px;font-weight:700;color:#fff;text-align:right;line-height:1">INTEGRATIONS<br/>AT SCALE</span>
+        </div>
+        <div style="flex:.8;background:#0a0a0a;display:flex;align-items:center;justify-content:center;min-height:40px">
+          <span style="font-size:8px;color:#666;letter-spacing:.15em">CONTACT</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Full-viewport stack</h3>
+      <p>Each section = 100vh. Hard cuts between backgrounds. Oversized headings centered or edge-aligned. Simple scroll-snap. Closest to your reference poster.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px"><strong>5 sections:</strong> Hero (LIGHT.jpg) → Red services → Dark infra (HEAD.jpeg) → Integrations list → Contact/CTA</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;background:#111;overflow:hidden">
+      <div style="height:280px;position:relative;font-family:system-ui,sans-serif">
+        <div style="position:absolute;inset:0;background:#bcbcbc;padding:16px">
+          <span style="font-size:12px;font-weight:800;color:#111">3DREAMLAB</span>
+        </div>
+        <div style="position:absolute;top:60px;left:8px;right:8px;height:90px;background:#ff2400;box-shadow:0 -4px 20px rgba(0,0,0,.3);padding:12px;display:flex;align-items:center">
+          <span style="font-size:13px;font-weight:900;color:#111;line-height:.85">BUILD<br/>FASTER</span>
+        </div>
+        <div style="position:absolute;top:130px;left:16px;right:0;height:100px;background:linear-gradient(rgba(0,0,0,.7),rgba(0,0,0,.7)),#222;padding:12px;display:flex;align-items:flex-end">
+          <span style="font-size:11px;font-weight:700;color:#fff">CLOUDFLARE<br/>EDGE</span>
+        </div>
+        <div style="position:absolute;top:210px;left:24px;right:8px;height:70px;background:#111;padding:10px;border-top:2px solid #ff2400">
+          <span style="font-size:9px;color:#888">Let's talk →</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Sticky panel reveal</h3>
+      <p>Sections slide up and stack over the previous one (card-deck effect). More cinematic, stronger sense of depth. Headings can bleed between panels.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px"><strong>4 sections:</strong> Hero (LIGHT.jpg) → Red (services) → Dark (HEAD.jpeg + infra) → CTA footer</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0;background:#f5f5f5;overflow:hidden">
+      <div style="height:280px;display:flex;flex-direction:column;font-family:system-ui,sans-serif;gap:0">
+        <div style="height:100px;background:#bcbcbc;padding:16px;display:flex;justify-content:space-between;align-items:flex-start">
+          <span style="font-size:18px;font-weight:900;color:#111;line-height:.8;max-width:60%">FAST<br/>ECOM</span>
+          <span style="font-size:7px;color:#666;font-family:monospace;margin-top:4px">#BCBCBC</span>
+        </div>
+        <div style="height:120px;background:#ff2400;padding:16px;position:relative">
+          <span style="font-size:22px;font-weight:900;color:#111;position:absolute;bottom:12px;left:16px;line-height:.75">EDGE<br/>PERF</span>
+          <div style="position:absolute;top:12px;right:12px;font-size:7px;color:rgba(0,0,0,.5);font-family:monospace;text-align:right">
+            A Shopify<br>B Payments<br>C ERP
+          </div>
+        </div>
+        <div style="flex:1;background:linear-gradient(rgba(0,0,0,.6),rgba(0,0,0,.6)),#444;padding:16px;display:flex;align-items:flex-end">
+          <span style="font-size:14px;font-weight:800;color:#fff;line-height:.85">GLOBAL<br/>LATENCY<br/><span style="font-size:8px;font-weight:400;opacity:.6">&lt;50ms</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Editorial asymmetric</h3>
+      <p>Variable section heights (60–120vh). Technical metadata in corners (HEX, latency). List-style integrations on red block. Most "poster/brutalist" — matches reference image 1 closely.</p>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px"><strong>4 sections:</strong> Light hero (LIGHT.jpg) → Red services list → Dark statue (HEAD.jpeg) → Minimal contact strip</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px">
+  <h3>Shared across all options</h3>
+  <ul style="font-size:14px;line-height:1.8;color:var(--text-secondary)">
+    <li><strong>LIGHT.jpg</strong> — hero / intro section (light overlay, dark text)</li>
+    <li><strong>#FF2400 red-orange</strong> — services &amp; integrations section</li>
+    <li><strong>HEAD.jpeg</strong> — infrastructure / performance section (dark overlay, white text)</li>
+    <li>Minimal nav: logo + single "Contact" anchor, or no nav at all</li>
+    <li>Scroll-triggered fade/slide animations on headings</li>
+    <li>No blog, no extra pages — single <code>index.astro</code></li>
+  </ul>
+</div>

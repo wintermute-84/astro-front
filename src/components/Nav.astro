@@ -1,0 +1,55 @@
+---
+import { SITE_TITLE } from '../consts';
+---
+
+<nav class="nav" id="nav">
+  <a href="#" class="nav__logo">{SITE_TITLE.toUpperCase()}</a>
+  <a href="#contact" class="nav__link">Contact</a>
+</nav>
+
+<style>
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 5vw;
+    font-family: var(--font-heading);
+    font-size: var(--text-nav);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--black);
+    background: transparent;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .nav--scrolled {
+    background: var(--black);
+    color: var(--white);
+  }
+
+  .nav__link {
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: var(--text-nav);
+  }
+
+  .nav__link:hover {
+    opacity: 0.7;
+  }
+</style>
+
+<script>
+  const nav = document.getElementById('nav');
+  if (nav) {
+    const onScroll = () => {
+      nav.classList.toggle('nav--scrolled', window.scrollY > 100);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+</script>

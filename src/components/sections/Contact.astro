@@ -1,0 +1,165 @@
+---
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+---
+
+<section class="section section--contact" id="contact">
+  <span class="section__meta">ready?</span>
+  <div class="section__inner">
+    <h2 class="heading-lg reveal" id="contact-heading">
+      LET'S<br />BUILD
+    </h2>
+
+    <form class="contact-form reveal" id="contact-form">
+      <div class="field">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" required maxlength="100" autocomplete="name" />
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="message">Message</label>
+        <textarea id="message" name="message" required maxlength="2000" rows="3"></textarea>
+      </div>
+      {siteKey ? (
+        <div class="turnstile-wrap" data-sitekey={siteKey} id="turnstile-container"></div>
+      ) : (
+        <p class="form-error">Contact form is temporarily unavailable.</p>
+      )}
+      <p class="form-error" id="form-error" hidden></p>
+      <button type="submit" class="submit-btn" id="submit-btn" disabled={!siteKey}>SEND →</button>
+    </form>
+
+    <div class="contact-success" id="contact-success" hidden>
+      <h2 class="heading-lg">MESSAGE<br />SENT</h2>
+      <p class="body-text" style="color: var(--gray);">We'll be in touch soon.</p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .contact-form {
+    margin-top: 2rem;
+    max-width: 28rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .field label {
+    display: block;
+    font-size: var(--text-label);
+    letter-spacing: 0.1em;
+    color: var(--gray);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .field input,
+  .field textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--gray-dark);
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    padding: 0.5rem 0;
+    outline: none;
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-bottom-color: var(--red);
+  }
+
+  .field textarea {
+    resize: vertical;
+    min-height: 4rem;
+  }
+
+  .submit-btn {
+    align-self: flex-start;
+    margin-top: 0.5rem;
+    background: var(--red);
+    color: var(--black);
+    border: none;
+    font-family: var(--font-heading);
+    font-size: var(--text-nav);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 0.9rem 1.75rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .submit-btn:hover:not(:disabled) { opacity: 0.85; }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .form-error {
+    color: var(--red);
+    font-size: var(--text-body);
+    margin: 0;
+  }
+
+  .contact-success {
+    margin-top: 2rem;
+  }
+</style>
+
+<script define:vars={{ siteKey }}>
+  const form = document.getElementById('contact-form');
+  const success = document.getElementById('contact-success');
+  const heading = document.getElementById('contact-heading');
+  const errorEl = document.getElementById('form-error');
+  const submitBtn = document.getElementById('submit-btn');
+  let turnstileToken = '';
+
+  if (siteKey) {
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async = true;
+    script.onload = () => {
+      const container = document.getElementById('turnstile-container');
+      if (container && window.turnstile) {
+        window.turnstile.render(container, {
+          sitekey: siteKey,
+          callback: (token) => { turnstileToken = token; },
+          'expired-callback': () => { turnstileToken = ''; },
+        });
+      }
+    };
+    document.head.appendChild(script);
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.hidden = true;
+    submitBtn.disabled = true;
+
+    const payload = {
+      name: form.name.value.trim(),
+      email: form.email.value.trim(),
+      message: form.message.value.trim(),
+      turnstileToken,
+    };
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.');
+      form.hidden = true;
+      heading.hidden = true;
+      success.hidden = false;
+    } catch (err) {
+      errorEl.textContent = err instanceof Error ? err.message : 'Something went wrong.';
+      errorEl.hidden = false;
+      updateSubmitState();
+    }
+  });
+</script>

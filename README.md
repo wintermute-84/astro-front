@@ -1,64 +1,70 @@
-# Astro Starter Kit: Blog
+# 3DreamLab
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/astro-blog-starter-template)
+Agency one-pager built with [Astro](https://astro.build) and deployed on [Cloudflare Workers](https://developers.cloudflare.com/workers/). Includes a contact form backed by Resend and Cloudflare Turnstile.
 
-![Astro Template Preview](https://github.com/withastro/astro/assets/2244813/ff10799f-a816-4703-b967-c78997e8323d)
+## What it is
 
-<!-- dash-content-start -->
+Single-page site for 3DreamLab — hero, services, infrastructure, and contact sections. The contact form POSTs to `/api/contact`, which verifies Turnstile and sends email via Resend.
 
-Create a blog with Astro and deploy it on Cloudflare Workers as a [static website](https://developers.cloudflare.com/workers/static-assets/).
-
-Features:
-
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
-- ✅ Built-in Observability logging
-
-<!-- dash-content-end -->
-
-## Getting Started
-
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
+## Dev
 
 ```bash
-npm create cloudflare@latest -- --template=cloudflare/templates/astro-blog-starter-template
+pnpm install   # may need: pnpm approve-builds
+pnpm dev       # or: npx astro dev
 ```
 
-A live public deployment of this template is available at [https://astro-blog-starter-template.templates.workers.dev](https://astro-blog-starter-template.templates.workers.dev)
+Open [http://localhost:4321](http://localhost:4321).
 
-## 🚀 Project Structure
+## Build
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+```bash
+npx astro build
+```
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Output goes to `./dist/`.
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+## Deploy
 
-Any static assets, like images, can be placed in the `public/` directory.
+```bash
+pnpm deploy    # or: wrangler deploy
+```
 
-## 🧞 Commands
+## Secrets setup
 
-All commands are run from the root of the project, from a terminal:
+### Local development
 
-| Command                           | Action                                           |
-| :-------------------------------- | :----------------------------------------------- |
-| `npm install`                     | Installs dependencies                            |
-| `npm run dev`                     | Starts local dev server at `localhost:4321`      |
-| `npm run build`                   | Build your production site to `./dist/`          |
-| `npm run preview`                 | Preview your build locally, before deploying     |
-| `npm run astro ...`               | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help`         | Get help using the Astro CLI                     |
-| `npm run build && npm run deploy` | Deploy your production site to Cloudflare        |
-| `npm wrangler tail`               | View real-time logs for all Workers              |
+Copy the example env file and fill in your values:
 
-## 👀 Want to learn more?
+```bash
+cp .dev.vars.example .dev.vars
+```
 
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+### Production secrets
 
-## Credit
+Set via Wrangler (prompted for values):
 
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+```bash
+wrangler secret put RESEND_API_KEY
+wrangler secret put TURNSTILE_SECRET_KEY
+wrangler secret put CONTACT_TO_EMAIL
+```
+
+Set the public Turnstile site key in `wrangler.json` under `vars`, or in `.dev.vars` for local dev:
+
+```
+PUBLIC_TURNSTILE_SITE_KEY=0x4xxxxxxxx
+```
+
+### External setup
+
+- **Resend:** Verify `3dreamlab.com` as a sending domain.
+- **Turnstile:** Create a widget for `3dreamlab.com` in the Cloudflare dashboard.
+
+## Commands
+
+| Command | Action |
+| :------ | :----- |
+| `pnpm dev` | Start dev server |
+| `pnpm build` | Production build |
+| `pnpm deploy` | Deploy to Cloudflare Workers |
+| `pnpm check` | Build + typecheck + dry-run deploy |

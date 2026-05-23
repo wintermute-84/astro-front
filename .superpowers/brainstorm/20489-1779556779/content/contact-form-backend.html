@@ -1,0 +1,67 @@
+<h2>Contact form + email backend</h2>
+<p class="subtitle">No public email · Worker handles POST · pick backend approach below</p>
+
+<div class="mockup" style="max-width:420px;margin:0 auto 28px">
+  <div class="mockup-header">Section 4 — Contact form (replaces email strip)</div>
+  <div class="mockup-body" style="padding:32px 28px;background:#0a0a0a;font-family:system-ui,sans-serif">
+    <span style="font-size:9px;color:#666;letter-spacing:.12em;display:block;margin-bottom:20px">READY?</span>
+    <h3 style="margin:0 0 24px;font-size:28px;font-weight:900;color:#fff;line-height:.9;letter-spacing:-.03em">LET'S<br/>BUILD</h3>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <label style="font-size:8px;color:#555;letter-spacing:.1em;display:block;margin-bottom:6px">NAME</label>
+        <div style="border-bottom:1px solid #333;padding:8px 0;color:#888;font-size:11px">Your name</div>
+      </div>
+      <div>
+        <label style="font-size:8px;color:#555;letter-spacing:.1em;display:block;margin-bottom:6px">EMAIL</label>
+        <div style="border-bottom:1px solid #333;padding:8px 0;color:#888;font-size:11px">you@company.com</div>
+      </div>
+      <div>
+        <label style="font-size:8px;color:#555;letter-spacing:.1em;display:block;margin-bottom:6px">MESSAGE</label>
+        <div style="border-bottom:1px solid #333;padding:8px 0 32px;color:#888;font-size:11px">Tell us about your project…</div>
+      </div>
+      <div style="height:28px;background:#1a1a1a;border:1px dashed #333;display:flex;align-items:center;justify-content:center;font-size:8px;color:#555">Turnstile widget</div>
+      <button style="margin-top:8px;background:#ff2400;border:none;color:#111;font-size:11px;font-weight:800;letter-spacing:.08em;padding:14px 24px;cursor:pointer;width:fit-content">SEND →</button>
+    </div>
+
+    <p style="margin:20px 0 0;font-size:9px;color:#444;line-height:1.5">Success state: heading fades to "MESSAGE SENT" in white. No email shown anywhere.</p>
+  </div>
+</div>
+
+<h3>Email backend — pick one</h3>
+<p class="subtitle">All options keep your inbox private via Worker secrets</p>
+
+<div class="options">
+  <div class="option" data-choice="resend" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Resend API <span style="font-size:11px;color:var(--accent);font-weight:600">recommended</span></h3>
+      <p><code>POST /api/contact</code> → Astro endpoint on Worker → Resend sends to your private inbox. Best docs, easy domain setup on 3dreamlab.com. Secret: <code>RESEND_API_KEY</code>.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="cf-email" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Cloudflare Email Service</h3>
+      <p>Native <code>send_email</code> binding in wrangler.json — no third party. Requires Email Service enabled on your domain. Slightly newer, fewer examples.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="resend-queue" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Resend + Queue</h3>
+      <p>Form POST queues message, Worker consumer sends via Resend. Better rate-limit handling — overkill for a small agency site unless you expect high volume.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:28px">
+  <h3>Locked so far</h3>
+  <ul style="font-size:14px;line-height:1.8;color:var(--text-secondary)">
+    <li><strong>Layout:</strong> Editorial asymmetric (C), sections ~55–65vh</li>
+    <li><strong>Sections:</strong> Hero (LIGHT.jpg) → Red services → Dark infra (HEAD.jpeg) → Contact form</li>
+    <li><strong>Brand:</strong> 3DreamLab · domain 3dreamlab.com</li>
+    <li><strong>Spam:</strong> Cloudflare Turnstile on form (free, fits CF stack)</li>
+    <li><strong>API:</strong> <code>src/pages/api/contact.ts</code> — server-rendered, not prerendered</li>
+  </ul>
+</div>

@@ -1,0 +1,25 @@
+---
+const services = [
+  { label: 'A', text: 'E-commerce storefronts' },
+  { label: 'B', text: 'Payment & checkout integrations' },
+  { label: 'C', text: 'ERP · CRM · inventory sync' },
+  { label: 'D', text: 'Headless & custom builds' },
+];
+---
+
+<section class="section section--services" id="services">
+  <span class="section__meta">scope · stack · ship</span>
+  <div class="section__inner">
+    <h2 class="heading-lg reveal">
+      WHAT<br />WE DO
+    </h2>
+    <div class="services-list reveal">
+      {services.map((item) => (
+        <div class="services-list__item">
+          <span class="services-list__label">{item.label}</span>
+          <span>{item.text}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
