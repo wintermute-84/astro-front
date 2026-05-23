@@ -10,5 +10,17 @@
 	"observability": {
 		"enabled": true
 	},
-	"upload_source_maps": true
+	"upload_source_maps": true,
+	"env": {
+		"dev": {
+			"account_id": "90f1e06ea9720912eb57d684bc61f396",
+			"route": { "pattern": "astro-front.vlad-kupriyenko.workers.dev", "custom_domain": true }
+
+		},
+		"production": {
+			"account_id": "90f1e06ea9720912eb57d684bc61f396",
+			"route": { "pattern": "3dreamlab.com", "custom_domain": true }
+
+		}
+	}
 }
