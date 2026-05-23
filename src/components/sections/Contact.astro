@@ -26,10 +26,9 @@
       <button type="submit" class="submit-btn" id="submit-btn" disabled>SEND →</button>
     </form>
 
-    <div class="contact-success" id="contact-success" hidden>
-      <h2 class="heading-lg">MESSAGE<br />SENT</h2>
-      <p class="body-text" style="color: var(--gray);">We'll be in touch soon.</p>
-    </div>
+    <p class="contact-success" id="contact-success" hidden>
+      Message sent. We'll be in touch soon.
+    </p>
   </div>
 </section>
 
@@ -100,6 +99,25 @@
 
   .contact-success {
     margin-top: 2rem;
+    font-size: var(--text-body);
+    color: var(--gray);
+    line-height: 1.55;
+    opacity: 0;
+    transform: translateY(1rem);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .contact-success--visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contact-success {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
   }
 </style>
 
@@ -199,6 +217,9 @@
       form.hidden = true;
       heading.hidden = true;
       success.hidden = false;
+      requestAnimationFrame(() => {
+        success.classList.add('contact-success--visible');
+      });
     } catch (err) {
       errorEl.textContent = err instanceof Error ? err.message : 'Something went wrong.';
       errorEl.hidden = false;

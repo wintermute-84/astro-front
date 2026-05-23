@@ -9,30 +9,29 @@
   --font-heading: "Syne", system-ui, sans-serif;
   --font-body: system-ui, sans-serif;
   --font-mono: ui-monospace, monospace;
-  /* Fixed rem sizes — avoids vw drift between dev viewport and full-width prod */
-  --text-nav: 1rem;
-  --text-body: 1.125rem;
-  --text-meta: 0.875rem;
-  --text-label: 1rem;
-  --text-stats: 1rem;
-  --heading-xl: 3.25rem;
-  --heading-lg: 2.75rem;
+  --text-nav: 0.9rem;
+  --text-body: 1rem;
+  --text-meta: 0.8rem;
+  --text-label: 0.9rem;
+  --text-stats: 0.9rem;
+  --heading-xl: 2.9rem;
+  --heading-lg: 2.5rem;
 }
 
 @media (min-width: 768px) {
   :root {
-    --text-nav: 1.0625rem;
-    --text-body: 1.25rem;
-    --text-meta: 0.9375rem;
-    --text-stats: 1.0625rem;
-    --heading-xl: 5rem;
-    --heading-lg: 4.25rem;
+    --text-nav: 0.935rem;
+    --text-body: 1.1rem;
+    --text-meta: 0.825rem;
+    --text-stats: 0.935rem;
+    --heading-xl: 4.4rem;
+    --heading-lg: 3.74rem;
   }
 }
 
 @media (min-width: 1200px) {
   :root {
-    --heading-xl: 6.5rem;
+    --heading-xl: 6.38rem;
     --heading-lg: 5.5rem;
   }
 }
@@ -46,7 +45,7 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
-  font-size: 16px;
+  font-size: 14.08px;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -54,7 +53,7 @@ html {
 body {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 16px;
+  font-size: 14.08px;
   line-height: 1.6;
   color: var(--black);
   background: var(--black);
