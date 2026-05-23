@@ -147,6 +147,24 @@ a {
   font-size: var(--heading-xl);
 }
 
+.heading-xl__commerce--mobile {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .section--hero .heading-xl {
+    font-size: clamp(2rem, 8.5vw, 2.75rem);
+  }
+
+  .heading-xl__commerce--desktop {
+    display: none;
+  }
+
+  .heading-xl__commerce--mobile {
+    display: inline;
+  }
+}
+
 .heading-lg {
   font-size: var(--heading-lg);
 }
