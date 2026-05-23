@@ -10,6 +10,7 @@
 	"observability": {
 		"enabled": true
 	},
+	"account_id": "90f1e06ea9720912eb57d684bc61f396",
 	"upload_source_maps": true,
 	"env": {
 		"dev": {
