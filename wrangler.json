@@ -21,7 +21,6 @@
 		"production": {
 			"account_id": "90f1e06ea9720912eb57d684bc61f396",
 			"route": { "pattern": "3dreamlab.com", "custom_domain": true }
-
 		}
 	}
 }

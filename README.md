@@ -41,19 +41,16 @@ cp .dev.vars.example .dev.vars
 
 ### Production secrets
 
-Set via Wrangler (prompted for values):
+Set via Wrangler for the **production** environment:
 
 ```bash
-wrangler secret put RESEND_API_KEY
-wrangler secret put TURNSTILE_SECRET_KEY
-wrangler secret put CONTACT_TO_EMAIL
+wrangler secret put RESEND_API_KEY --env production
+wrangler secret put TURNSTILE_SECRET_KEY --env production
+wrangler secret put CONTACT_TO_EMAIL --env production
+wrangler secret put PUBLIC_TURNSTILE_SITE_KEY --env production
 ```
 
-Set the public Turnstile site key in `wrangler.json` under `vars`, or in `.dev.vars` for local dev:
-
-```
-PUBLIC_TURNSTILE_SITE_KEY=0x4xxxxxxxx
-```
+For local dev, copy `.dev.vars.example` to `.dev.vars` and fill in all four values (including `PUBLIC_TURNSTILE_SITE_KEY`).
 
 ### External setup
 
