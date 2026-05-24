@@ -1,5 +1,16 @@
+---
+import SectionBg from '../SectionBg.astro';
+---
+
 <section class="section section--hero" id="hero">
-  <div class="section__bg" data-parallax style="background-image: url('/LIGHT.jpg')"></div>
+  <SectionBg
+    jpg="/LIGHT.jpg"
+    webp="/LIGHT.webp"
+    webpSm="/LIGHT-960.webp"
+    width={1400}
+    height={830}
+    priority
+  />
   <div class="section__overlay section__overlay--light"></div>
   <span class="section__meta">speed · clarity · craft</span>
   <div class="section__inner">

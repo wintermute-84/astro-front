@@ -1,0 +1,29 @@
+---
+interface Props {
+  jpg: string;
+  webp: string;
+  webpSm: string;
+  width: number;
+  height: number;
+  priority?: boolean;
+}
+
+const { jpg, webp, webpSm, width, height, priority = false } = Astro.props;
+const srcset = `${webpSm} 960w, ${webp} ${width}w`;
+---
+
+<div class="section__bg" data-parallax>
+  <picture>
+    <source srcset={srcset} sizes="100vw" type="image/webp" />
+    <img
+      src={jpg}
+      alt=""
+      width={width}
+      height={height}
+      sizes="100vw"
+      loading={priority ? 'eager' : 'lazy'}
+      fetchpriority={priority ? 'high' : 'auto'}
+      decoding={priority ? 'sync' : 'async'}
+    />
+  </picture>
+</div>

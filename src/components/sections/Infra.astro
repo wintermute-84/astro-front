@@ -1,5 +1,15 @@
+---
+import SectionBg from '../SectionBg.astro';
+---
+
 <section class="section section--infra" id="infra">
-  <div class="section__bg" data-parallax style="background-image: url('/HEAD.jpeg')"></div>
+  <SectionBg
+    jpg="/HEAD.jpeg"
+    webp="/HEAD.webp"
+    webpSm="/HEAD-960.webp"
+    width={1400}
+    height={901}
+  />
   <div class="section__overlay section__overlay--dark"></div>
   <span class="section__meta">edge · global · always-on</span>
   <div class="section__inner" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 2rem;">
