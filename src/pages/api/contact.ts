@@ -8,7 +8,6 @@ interface ContactBody {
   email?: string;
   message?: string;
   offer?: string;
-  url?: string;
   turnstileToken?: string;
 }
 
@@ -76,13 +75,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const email = body.email?.trim() ?? '';
   const message = body.message?.trim() ?? '';
   const offer = OFFERS[body.offer ?? ''] ?? 'Not specified';
-  const url = body.url?.trim() ?? '';
   const turnstileToken = body.turnstileToken ?? '';
 
   if (!name || name.length > 100) return json({ error: 'Name is required (max 100 chars).' }, 422);
   if (!email || !isValidEmail(email)) return json({ error: 'Valid email is required.' }, 422);
-  if (!message || message.length > 2000) return json({ error: 'Message is required (max 2000 chars).' }, 422);
-  if (url.length > 300) return json({ error: 'URL is too long (max 300 chars).' }, 422);
+  if (!message || message.length > 2000) return json({ error: 'Tell us what is slow (max 2000 chars).' }, 422);
   if (!turnstileToken) return json({ error: 'Captcha verification required.' }, 422);
 
   const ip = request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? '';
@@ -99,8 +96,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       <p><strong>Name:</strong> ${escapeHtml(name)}</p>
       <p><strong>Email:</strong> ${escapeHtml(email)}</p>
       <p><strong>Interested in:</strong> ${offer}</p>
-      <p><strong>Slow URL or API:</strong> ${escapeHtml(url) || '-'}</p>
-      <p><strong>Brief:</strong></p>
+      <p><strong>What's slow:</strong></p>
       <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
     `,
   });

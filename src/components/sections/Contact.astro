@@ -5,7 +5,7 @@
       SHOW ME<br />THE SLOW PART.
     </h2>
     <p class="body-text reveal contact-intro" id="contact-intro">
-      One endpoint, docs link or short brief.
+      A few lines is enough.
     </p>
 
     <form class="contact-form reveal" id="contact-form">
@@ -28,13 +28,8 @@
       </div>
 
       <div class="field">
-        <label for="url">Slow URL or API <span class="field__opt">optional</span></label>
-        <input type="text" id="url" name="url" maxlength="300" placeholder="https://api.example.com/stock" />
-      </div>
-
-      <div class="field">
-        <label for="message">Brief</label>
-        <textarea id="message" name="message" required maxlength="2000" rows="3"></textarea>
+        <label for="message">What's slow?</label>
+        <textarea id="message" name="message" required maxlength="2000" rows="3" placeholder="e.g. Product pages wait ~2 s on the stock API."></textarea>
       </div>
       <div class="turnstile-wrap" id="turnstile-container" hidden></div>
       <p class="form-error" id="form-unavailable" hidden>
@@ -68,17 +63,11 @@
     text-transform: uppercase;
   }
 
-  .field__opt {
-    text-transform: none;
-    letter-spacing: 0;
-    opacity: 0.6;
-  }
-
   .contact-intro {
     color: var(--gray);
   }
 
-  .field input::placeholder {
+  .field textarea::placeholder {
     color: var(--gray-dark);
   }
 
@@ -257,7 +246,6 @@
       name: form.name.value.trim(),
       email: form.email.value.trim(),
       offer: offerSelect.value,
-      url: form.url.value.trim(),
       message: form.message.value.trim(),
       turnstileToken,
     };
