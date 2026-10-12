@@ -7,8 +7,17 @@ interface ContactBody {
   name?: string;
   email?: string;
   message?: string;
+  offer?: string;
+  url?: string;
   turnstileToken?: string;
 }
+
+const OFFERS: Record<string, string> = {
+  audit: 'Latency audit',
+  build: 'Edge read layer',
+  ops: 'Edge ops',
+  agency: 'White-label / agency',
+};
 
 function json(data: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -66,11 +75,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const name = body.name?.trim() ?? '';
   const email = body.email?.trim() ?? '';
   const message = body.message?.trim() ?? '';
+  const offer = OFFERS[body.offer ?? ''] ?? 'Not specified';
+  const url = body.url?.trim() ?? '';
   const turnstileToken = body.turnstileToken ?? '';
 
   if (!name || name.length > 100) return json({ error: 'Name is required (max 100 chars).' }, 422);
   if (!email || !isValidEmail(email)) return json({ error: 'Valid email is required.' }, 422);
   if (!message || message.length > 2000) return json({ error: 'Message is required (max 2000 chars).' }, 422);
+  if (url.length > 300) return json({ error: 'URL is too long (max 300 chars).' }, 422);
   if (!turnstileToken) return json({ error: 'Captcha verification required.' }, 422);
 
   const ip = request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? '';
@@ -82,11 +94,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     from: '3DreamLab <contact@3dreamlab.com>',
     to: [env.CONTACT_TO_EMAIL],
     replyTo: email,
-    subject: `3DreamLab inquiry from ${sanitizeSubjectValue(name)}`,
+    subject: `3DreamLab ${offer} inquiry from ${sanitizeSubjectValue(name)}`,
     html: `
       <p><strong>Name:</strong> ${escapeHtml(name)}</p>
       <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-      <p><strong>Message:</strong></p>
+      <p><strong>Interested in:</strong> ${offer}</p>
+      <p><strong>Slow URL or API:</strong> ${escapeHtml(url) || '-'}</p>
+      <p><strong>Brief:</strong></p>
       <p>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
     `,
   });

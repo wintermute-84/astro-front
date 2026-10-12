@@ -1,9 +1,12 @@
 <section class="section section--contact" id="contact">
-  <span class="section__meta">ready?</span>
+  <span class="section__meta">no credentials · no customer data</span>
   <div class="section__inner">
     <h2 class="heading-lg reveal" id="contact-heading">
-      LET'S<br />BUILD
+      SHOW ME<br />THE SLOW PART.
     </h2>
+    <p class="body-text reveal contact-intro" id="contact-intro">
+      One endpoint, docs link or short brief. I reply with the next step.
+    </p>
 
     <form class="contact-form reveal" id="contact-form">
       <div class="field">
@@ -15,7 +18,22 @@
         <input type="email" id="email" name="email" required autocomplete="email" />
       </div>
       <div class="field">
-        <label for="message">Message</label>
+        <label for="offer">Interested in</label>
+        <select id="offer" name="offer">
+          <option value="audit">Latency audit · €990</option>
+          <option value="build">Edge read layer · €4–8k</option>
+          <option value="ops">Edge ops · from €500/mo</option>
+          <option value="agency">White-label / agency</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="url">Slow URL or API <span class="field__opt">optional</span></label>
+        <input type="text" id="url" name="url" maxlength="300" placeholder="https://api.example.com/stock" />
+      </div>
+
+      <div class="field">
+        <label for="message">Brief</label>
         <textarea id="message" name="message" required maxlength="2000" rows="3"></textarea>
       </div>
       <div class="turnstile-wrap" id="turnstile-container" hidden></div>
@@ -23,11 +41,11 @@
         Contact form is temporarily unavailable.
       </p>
       <p class="form-error" id="form-error" hidden></p>
-      <button type="submit" class="submit-btn" id="submit-btn" disabled>SEND →</button>
+      <button type="submit" class="submit-btn" id="submit-btn" disabled>SEND THE BRIEF →</button>
     </form>
 
     <p class="contact-success" id="contact-success" hidden>
-      Message sent. We'll be in touch soon.
+      Got it. I'll review the brief and reply with the next step.
     </p>
   </div>
 </section>
@@ -50,7 +68,33 @@
     text-transform: uppercase;
   }
 
+  .field__opt {
+    text-transform: none;
+    letter-spacing: 0;
+    opacity: 0.6;
+  }
+
+  .contact-intro {
+    color: var(--gray);
+  }
+
+  .field input::placeholder {
+    color: var(--gray-dark);
+  }
+
+  .field select {
+    appearance: none;
+    border-radius: 0;
+    cursor: pointer;
+    background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 0.25rem center;
+  }
+
+  .field select option {
+    background: var(--black);
+  }
+
   .field input,
+  .field select,
   .field textarea {
     width: 100%;
     background: transparent;
@@ -64,6 +108,7 @@
   }
 
   .field input:focus,
+  .field select:focus,
   .field textarea:focus {
     border-bottom-color: var(--red);
   }
@@ -79,16 +124,17 @@
     background: var(--red);
     color: var(--black);
     border: none;
-    font-family: var(--font-heading);
+    font-family: var(--font-body);
     font-size: var(--text-nav);
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
     padding: 0.9rem 1.75rem;
     cursor: pointer;
     transition: opacity 0.2s;
   }
 
   .submit-btn:hover:not(:disabled) { opacity: 0.85; }
+  .submit-btn:active:not(:disabled) { transform: scale(0.97); transition: transform 100ms ease-out; }
   .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .form-error {
@@ -129,6 +175,14 @@
   const unavailableEl = document.getElementById('form-unavailable');
   const submitBtn = document.getElementById('submit-btn');
   const turnstileContainer = document.getElementById('turnstile-container');
+  const intro = document.getElementById('contact-intro');
+  const offerSelect = document.getElementById('offer');
+
+  document.querySelectorAll('[data-offer]').forEach((link) => {
+    link.addEventListener('click', () => {
+      offerSelect.value = link.dataset.offer;
+    });
+  });
   let turnstileToken = '';
 
   const updateSubmitState = () => {
@@ -202,6 +256,8 @@
     const payload = {
       name: form.name.value.trim(),
       email: form.email.value.trim(),
+      offer: offerSelect.value,
+      url: form.url.value.trim(),
       message: form.message.value.trim(),
       turnstileToken,
     };
@@ -216,6 +272,7 @@
       if (!res.ok) throw new Error(data.error || 'Something went wrong.');
       form.hidden = true;
       heading.hidden = true;
+      intro.hidden = true;
       success.hidden = false;
       requestAnimationFrame(() => {
         success.classList.add('contact-success--visible');

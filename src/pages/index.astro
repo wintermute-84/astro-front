@@ -2,16 +2,17 @@
 import BaseHead from '../components/BaseHead.astro';
 import Nav from '../components/Nav.astro';
 import Hero from '../components/sections/Hero.astro';
-import Services from '../components/sections/Services.astro';
-import Infra from '../components/sections/Infra.astro';
+import Offers from '../components/sections/Offers.astro';
+import Agency from '../components/sections/Agency.astro';
 import Contact from '../components/sections/Contact.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import Footer from '../components/Footer.astro';
+import { PAGE_TITLE, SITE_DESCRIPTION } from '../consts';
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} preloadHero />
+    <BaseHead title={PAGE_TITLE} description={SITE_DESCRIPTION} preloadHero />
   </head>
   <body>
     <noscript>
@@ -20,14 +21,14 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
     <Nav />
     <main>
       <Hero />
-      <Services />
-      <Infra />
+      <Offers />
+      <Agency />
       <Contact />
     </main>
+    <Footer />
     <script>
-      import { initReveal, initParallax } from '../scripts/reveal.ts';
+      import { initReveal } from '../scripts/reveal.ts';
       initReveal();
-      initParallax();
     </script>
   </body>
 </html>

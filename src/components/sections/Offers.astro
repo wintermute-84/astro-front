@@ -1,0 +1,54 @@
+---
+const next = [
+  {
+    step: '02 · BUILD',
+    name: 'EDGE READ LAYER',
+    price: '€4–8K',
+    text: 'A narrow Worker layer, scoped by the audit. Built, measured, handed over.',
+  },
+  {
+    step: '03 · OPERATE',
+    name: 'EDGE OPS',
+    price: 'FROM €500/MO',
+    text: 'Monitoring, upkeep and agreed incident cover.',
+  },
+];
+---
+
+<section class="section section--offers" id="offers">
+  <span class="section__meta">fixed price · excl. vat</span>
+
+  <div class="section__inner">
+    <h2 class="heading-lg reveal">START<br />HERE.</h2>
+
+    <div class="offer offer--lead reveal">
+      <span class="offer__step">01 · AUDIT</span>
+      <div class="offer__head">
+        <h3 class="offer__name">LATENCY AUDIT</h3>
+        <span class="offer__price">€990</span>
+      </div>
+      <ul class="offer__list">
+        <li>Measure the slow reads.</li>
+        <li>Map what can move to the edge.</li>
+        <li>Leave with a build plan.</li>
+      </ul>
+      <div class="actions">
+        <a href="#contact" class="btn btn--dark" data-offer="audit">BOOK THE AUDIT →</a>
+        <span class="offer__note">No build obligation.</span>
+      </div>
+    </div>
+
+    <div class="offer-row reveal">
+      {next.map((o) => (
+        <div class="offer">
+          <span class="offer__step">{o.step}</span>
+          <div class="offer__head">
+            <h3 class="offer__name">{o.name}</h3>
+            <span class="offer__price">{o.price}</span>
+          </div>
+          <p class="offer__text">{o.text}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

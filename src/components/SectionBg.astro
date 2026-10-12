@@ -12,7 +12,7 @@ const { jpg, webp, webpSm, width, height, priority = false } = Astro.props;
 const srcset = `${webpSm} 960w, ${webp} ${width}w`;
 ---
 
-<div class="section__bg" data-parallax>
+<div class="section__bg">
   <picture>
     <source srcset={srcset} sizes="100vw" type="image/webp" />
     <img

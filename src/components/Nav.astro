@@ -4,7 +4,7 @@ import { SITE_TITLE } from '../consts';
 
 <nav class="nav" id="nav">
   <a href="#" class="nav__logo">{SITE_TITLE.toUpperCase()}</a>
-  <a href="#contact" class="nav__link">Contact</a>
+  <a href="#contact" class="nav__link" data-offer="audit">Book audit</a>
 </nav>
 
 <style>
@@ -28,8 +28,18 @@ import { SITE_TITLE } from '../consts';
   }
 
   .nav--scrolled {
-    background: var(--black);
+    background: rgba(10, 10, 10, 0.72);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
     color: var(--white);
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .nav--scrolled {
+      background: var(--black);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
   }
 
   .nav__link {
