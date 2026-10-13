@@ -1,0 +1,231 @@
+<section class="section section--diagram" id="how" aria-label="Before and after: slow origin API versus edge read layer">
+  <svg class="diagram reveal" viewBox="0 0 960 370" role="img" aria-labelledby="diagram-title">
+    <title id="diagram-title">
+      Before: the frontend waits about 1.8 seconds on a slow PIM or ERP API. After: reads are served by an edge network near the customer in about 40 ms, and the origin refreshes in the background.
+    </title>
+
+    <!-- captions -->
+    <g class="scene-a">
+      <text x="0" y="36" class="caption"><tspan class="caption__tag">BEFORE</tspan> every read waits on the origin</text>
+      <text x="270" y="125" class="timer timer--slow">1,800 ms</text>
+    </g>
+    <g class="scene-b">
+      <text x="0" y="36" class="caption"><tspan class="caption__tag caption__tag--red">AFTER</tspan> reads served from the edge, near the customer</text>
+      <text x="270" y="125" class="timer timer--fast">40 ms</text>
+    </g>
+
+    <!-- customers -->
+    <g class="node">
+      <line x1="82" y1="165" x2="170" y2="210" />
+      <line x1="82" y1="210" x2="170" y2="210" />
+      <line x1="82" y1="255" x2="170" y2="210" />
+      <circle cx="70" cy="165" r="11" class="dot" />
+      <circle cx="70" cy="210" r="11" class="dot" />
+      <circle cx="70" cy="255" r="11" class="dot" />
+      <text x="70" y="310" class="label">CUSTOMERS</text>
+    </g>
+
+    <!-- frontend -->
+    <rect x="170" y="155" width="200" height="110" class="box" />
+    <text x="270" y="216" class="box__title">FRONTEND</text>
+    <rect x="170" y="280" width="200" height="5" class="wait-bar" />
+
+    <!-- origin (dims once the edge takes over) -->
+    <g class="origin">
+      <line x1="370" y1="210" x2="750" y2="210" class="wire" />
+      <rect x="750" y="155" width="190" height="110" class="box" />
+      <text x="845" y="210" class="box__title">PIM / ERP</text>
+      <text x="845" y="240" class="label">origin API</text>
+    </g>
+
+    <!-- edge network -->
+    <g class="edge">
+      <rect x="412" y="120" width="56" height="190" class="edge__band" />
+      <line x1="440" y1="135" x2="440" y2="295" class="edge__spine" />
+      <circle cx="440" cy="140" r="9" class="edge__node" />
+      <circle cx="440" cy="185" r="9" class="edge__node" />
+      <circle cx="440" cy="235" r="9" class="edge__node" />
+      <circle cx="440" cy="280" r="9" class="edge__node" />
+      <text x="440" y="340" class="label label--red">EDGE NETWORK</text>
+    </g>
+
+    <!-- packets -->
+    <circle cx="376" cy="210" r="7" class="packet packet--slow" />
+    <circle cx="376" cy="210" r="7" class="packet packet--fast" />
+    <circle cx="450" cy="210" r="5" class="packet packet--sync" />
+    <text x="600" y="190" class="label sync-label">background refresh</text>
+  </svg>
+</section>
+
+<style>
+  .section--diagram {
+    min-height: auto;
+    background: var(--black);
+    color: var(--white);
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+
+  .diagram {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1200px;
+    height: auto;
+    overflow: visible;
+  }
+
+  text {
+    fill: var(--white);
+    text-anchor: middle;
+  }
+
+  .caption {
+    text-anchor: start;
+    font-family: var(--font-mono);
+    font-size: 22px;
+    fill: var(--gray);
+  }
+
+  .caption__tag {
+    fill: var(--white);
+    font-weight: 700;
+  }
+
+  .caption__tag--red { fill: var(--red); }
+
+  .timer {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 40px;
+    letter-spacing: -0.02em;
+  }
+
+  .timer--slow { fill: var(--gray); }
+  .timer--fast { fill: var(--red); }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    fill: var(--gray);
+    letter-spacing: 0.04em;
+  }
+
+  .label--red { fill: var(--red); }
+
+  .box {
+    fill: none;
+    stroke: var(--white);
+    stroke-width: 2;
+  }
+
+  .box__title {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 16px;
+  }
+
+  .node line,
+  .wire {
+    stroke: var(--gray-dark);
+    stroke-width: 2;
+  }
+
+  .wire { stroke-dasharray: 6 8; }
+  .dot { fill: var(--white); }
+
+  .edge__band { fill: var(--red); opacity: 0.14; }
+  .edge__spine { stroke: var(--red); stroke-width: 2; }
+  .edge__node { fill: var(--red); }
+
+  .wait-bar { fill: var(--gray); transform-box: fill-box; transform-origin: left; }
+
+  .packet--slow { fill: var(--white); }
+  .packet--fast { fill: var(--red); }
+  .packet--sync { fill: var(--gray); }
+  .sync-label { font-size: 15px; }
+
+  /* One shared 12s timeline: 0-42% before, 42-50% transition, 50-94% after, 94-100% reset. */
+  .scene-a, .scene-b, .origin, .edge, .wait-bar, .packet, .sync-label {
+    animation-duration: 12s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+
+  .scene-a { animation-name: scene-a; }
+  .scene-b { animation-name: scene-b; opacity: 0; }
+  .origin { animation-name: origin; }
+  .edge { animation-name: edge; opacity: 0; }
+  .wait-bar { animation-name: wait-bar; animation-timing-function: linear; }
+  .packet--slow { animation-name: packet-slow; animation-timing-function: linear; }
+  .packet--fast { animation-name: packet-fast; opacity: 0; }
+  .packet--sync { animation-name: packet-sync; animation-timing-function: linear; opacity: 0; }
+  .sync-label { animation-name: sync-label; opacity: 0; }
+
+  @keyframes scene-a {
+    0%, 40% { opacity: 1; }
+    44%, 96% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes scene-b {
+    0%, 46% { opacity: 0; }
+    50%, 93% { opacity: 1; }
+    97%, 100% { opacity: 0; }
+  }
+
+  @keyframes origin {
+    0%, 42% { opacity: 1; }
+    50%, 93% { opacity: 0.35; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes edge {
+    0%, 42% { opacity: 0; transform: translateX(40px); }
+    50%, 93% { opacity: 1; transform: translateX(0); }
+    98%, 100% { opacity: 0; transform: translateX(40px); }
+  }
+
+  @keyframes wait-bar {
+    0%, 4% { transform: scaleX(0); opacity: 1; }
+    32%, 40% { transform: scaleX(1); opacity: 1; }
+    43%, 100% { transform: scaleX(1); opacity: 0; }
+  }
+
+  @keyframes packet-slow {
+    0%, 4% { transform: translateX(0); opacity: 0; }
+    5% { opacity: 1; }
+    18% { transform: translateX(367px); }
+    31% { transform: translateX(0); opacity: 1; }
+    32%, 100% { transform: translateX(0); opacity: 0; }
+  }
+
+  @keyframes packet-fast {
+    0%, 51% { transform: translateX(0); opacity: 0; }
+    52%, 62%, 72% { transform: translateX(0); opacity: 1; }
+    53.5%, 63.5%, 73.5% { transform: translateX(48px); }
+    55%, 65%, 75% { transform: translateX(0); opacity: 1; }
+    76%, 100% { transform: translateX(0); opacity: 0; }
+  }
+
+  @keyframes packet-sync {
+    0%, 77% { transform: translateX(0); opacity: 0; }
+    78% { opacity: 0.9; }
+    91% { transform: translateX(295px); opacity: 0.9; }
+    92%, 100% { transform: translateX(295px); opacity: 0; }
+  }
+
+  @keyframes sync-label {
+    0%, 77% { opacity: 0; }
+    80%, 90% { opacity: 1; }
+    93%, 100% { opacity: 0; }
+  }
+
+  /* Reduced motion: show the "after" state, no movement. */
+  @media (prefers-reduced-motion: reduce) {
+    .scene-a, .scene-b, .origin, .edge, .wait-bar, .packet, .sync-label { animation: none; }
+    .scene-a, .wait-bar, .packet { opacity: 0; }
+    .scene-b, .edge { opacity: 1; transform: none; }
+    .origin { opacity: 0.35; }
+  }
+</style>
