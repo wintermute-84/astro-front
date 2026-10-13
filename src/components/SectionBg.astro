@@ -9,7 +9,7 @@ interface Props {
 }
 
 const { jpg, webp, webpSm, width, height, priority = false } = Astro.props;
-const srcset = `${webpSm} 960w, ${webp} ${width}w`;
+const srcset = `${webpSm.replace("-960", "-640")} 640w, ${webpSm} 960w, ${webp} ${width}w`;
 ---
 
 <div class="section__bg">

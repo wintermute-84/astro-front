@@ -6,6 +6,7 @@ import cloudflare from "@astrojs/cloudflare";
 export default defineConfig({
   site: "https://3dreamlab.com",
   integrations: [sitemap()],
+  build: { inlineStylesheets: "always" },
   adapter: cloudflare({
     platformProxy: {
       enabled: true,

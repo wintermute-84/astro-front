@@ -95,6 +95,7 @@ a {
   color: var(--white);
   opacity: 0.55;
 }
+.section--offers .section__meta { opacity: 1; }
 .section--offers { background: var(--red); color: var(--black); padding-top: 6rem; padding-bottom: 6rem; }
 .section--agency { background: var(--paper); color: var(--black); }
 .section--contact { min-height: 55vh; background: var(--black); color: var(--white); }

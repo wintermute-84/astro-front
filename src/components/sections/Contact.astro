@@ -228,7 +228,14 @@
     }
   }
 
-  initTurnstile();
+  // Load the captcha only when the form gets close, keeping it off the initial load.
+  const formObserver = new IntersectionObserver((entries) => {
+    if (entries.some((e) => e.isIntersecting)) {
+      formObserver.disconnect();
+      initTurnstile();
+    }
+  }, { rootMargin: '600px' });
+  if (form) formObserver.observe(form);
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
