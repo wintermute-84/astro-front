@@ -24,10 +24,13 @@ import { SITE_TITLE } from '../consts';
     letter-spacing: 0.12em;
     color: var(--black);
     background: transparent;
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background 0.3s ease, color 0.3s ease, padding 0.3s ease, font-size 0.3s ease;
   }
 
   .nav--scrolled {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+    font-size: 0.75rem;
     background: rgba(10, 10, 10, 0.72);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
     backdrop-filter: blur(16px) saturate(160%);
@@ -42,7 +45,14 @@ import { SITE_TITLE } from '../consts';
     }
   }
 
+  .nav--scrolled .nav__link {
+    font-size: inherit;
+  }
+
   .nav__link {
+    /* Keeps the tap target ~44px tall even when the bar is compact. */
+    padding: 0.9rem 0;
+    margin: -0.9rem 0;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     font-size: var(--text-nav);
