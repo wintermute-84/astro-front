@@ -5,13 +5,13 @@
       <p class="caption scene-b"><span class="caption__tag caption__tag--red">After.</span> Reads served from the edge node nearest the customer.</p>
     </div>
 
-    <svg class="diagram" viewBox="0 48 760 182" role="img" aria-labelledby="diagram-title">
+    <svg class="diagram diagram--wide" viewBox="0 48 760 182" role="img" aria-labelledby="diagram-title">
       <title id="diagram-title">
-        Before: the frontend waits about 1.8 seconds on a slow PIM or ERP API. After: a global edge network answers from the node nearest each customer in about 40 ms, and the origin refreshes in the background.
+        Before: the frontend waits about 0.8 seconds on a slow PIM or ERP API. After: a global edge network answers from the node nearest each customer in about 45 ms, and the origin refreshes in the background.
       </title>
 
-      <g class="scene-a"><text x="180" y="76" class="timer timer--slow">1,800 ms</text></g>
-      <g class="scene-b"><text x="180" y="76" class="timer timer--fast">40 ms</text></g>
+      <g class="scene-a"><text x="180" y="76" class="timer timer--slow"><tspan class="approx">~</tspan>800 ms</text></g>
+      <g class="scene-b"><text x="180" y="76" class="timer timer--fast"><tspan class="approx">~</tspan>45 ms</text></g>
 
       <!-- customers -->
       <g class="node">
@@ -52,7 +52,7 @@
         <circle cx="308" cy="125" r="5" class="pop-near__ring" />
         <circle cx="308" cy="125" r="5" class="pop-near" />
         <text x="360" y="203" class="label label--red">EDGE NETWORK</text>
-        <text x="360" y="220" class="label label--small">nearest node serves each customer</text>
+        <text x="360" y="220" class="label label--small">nearest node server</text>
       </g>
 
       <!-- packets -->
@@ -60,6 +60,62 @@
       <circle cx="256" cy="125" r="5" class="packet packet--fast" />
       <circle cx="416" cy="125" r="3.5" class="packet packet--sync" />
       <text x="508" y="112" class="label label--small sync-label">background refresh</text>
+    </svg>
+
+    <svg class="diagram diagram--tall" viewBox="-50 0 365 440" role="img" aria-labelledby="diagram-title-tall">
+      <title id="diagram-title-tall">
+        Before: the frontend waits about 0.8 seconds on a slow PIM or ERP API. After: a global edge network answers from the node nearest each customer in about 45 ms, and the origin refreshes in the background.
+      </title>
+
+      <!-- customers -->
+      <g class="node">
+        <line x1="90" y1="51" x2="130" y2="80" />
+        <line x1="130" y1="51" x2="130" y2="80" />
+        <line x1="170" y1="51" x2="130" y2="80" />
+        <circle cx="90" cy="44" r="7" class="dot" />
+        <circle cx="130" cy="44" r="7" class="dot" />
+        <circle cx="170" cy="44" r="7" class="dot" />
+        <text x="130" y="18" class="label">CUSTOMERS</text>
+      </g>
+
+      <!-- frontend -->
+      <rect x="60" y="80" width="140" height="56" class="box" />
+      <text x="130" y="112" class="box__title">FRONTEND</text>
+      <rect x="60" y="141" width="140" height="3" class="wait-bar" />
+      <g class="scene-a"><text x="262" y="114" class="timer timer--slow"><tspan class="approx">~</tspan>800 ms</text></g>
+      <g class="scene-b"><text x="262" y="114" class="timer timer--fast"><tspan class="approx">~</tspan>45 ms</text></g>
+
+      <!-- origin -->
+      <g class="origin">
+        <line x1="130" y1="144" x2="130" y2="370" class="wire" />
+        <rect x="60" y="370" width="140" height="56" class="box" />
+        <text x="130" y="396" class="box__title">PIM / ERP</text>
+        <text x="130" y="414" class="label">origin API</text>
+      </g>
+
+      <!-- global edge network; nearest node faces the customers -->
+      <g class="edge">
+        <circle cx="130" cy="250" r="48" class="globe" />
+        <ellipse cx="130" cy="250" rx="48" ry="16" class="globe__line" />
+        <ellipse cx="130" cy="250" rx="24" ry="48" class="globe__line globe__meridian" />
+        <ellipse cx="130" cy="250" rx="24" ry="48" class="globe__line globe__meridian globe__meridian--late" />
+        <circle cx="110" cy="232" r="3" class="pop" />
+        <circle cx="154" cy="226" r="3" class="pop" />
+        <circle cx="166" cy="258" r="3" class="pop" />
+        <circle cx="140" cy="284" r="3" class="pop" />
+        <circle cx="104" cy="276" r="3" class="pop" />
+        <circle cx="132" cy="252" r="3" class="pop" />
+        <circle cx="130" cy="202" r="5" class="pop-near__ring" />
+        <circle cx="130" cy="202" r="5" class="pop-near" />
+        <text x="255" y="246" class="label label--red">EDGE NETWORK</text>
+        <text x="255" y="262" class="label label--small">nearest node server</text>
+      </g>
+
+      <!-- packets -->
+      <circle cx="130" cy="152" r="5" class="packet packet--slow packet--v" />
+      <circle cx="130" cy="152" r="5" class="packet packet--fast packet--v" />
+      <circle cx="130" cy="302" r="3.5" class="packet packet--sync packet--v" />
+      <text x="255" y="340" class="label label--small sync-label">background refresh</text>
     </svg>
   </div>
 </section>
@@ -76,11 +132,14 @@
   .diagram-wrap {
     position: relative;
     z-index: 2;
+    width: 100%;
     max-width: 860px;
+    margin-inline: auto;
   }
 
   .captions {
     display: grid;
+    text-align: center;
   }
 
   .caption {
@@ -103,6 +162,14 @@
     overflow: visible;
   }
 
+  .diagram--tall { display: none; max-width: 365px; margin-inline: auto; }
+  .diagram--tall .timer { font-size: 16px; }
+
+  @media (max-width: 767px) {
+    .diagram--wide { display: none; }
+    .diagram--tall { display: block; }
+  }
+
   text {
     fill: var(--white);
     text-anchor: middle;
@@ -114,6 +181,8 @@
     font-size: 24px;
     letter-spacing: -0.02em;
   }
+
+  .approx { font-family: var(--font-body); font-weight: 700; }
 
   .timer--slow { fill: var(--gray); }
   .timer--fast { fill: var(--red); }
@@ -202,6 +271,9 @@
   .packet--slow { animation-name: packet-slow; animation-timing-function: linear; }
   .packet--fast { animation-name: packet-fast; opacity: 0; }
   .packet--sync { animation-name: packet-sync; animation-timing-function: linear; opacity: 0; }
+  .packet--slow.packet--v { animation-name: packet-slow-v; }
+  .packet--fast.packet--v { animation-name: packet-fast-v; }
+  .packet--sync.packet--v { animation-name: packet-sync-v; }
   .sync-label { animation-name: sync-label; opacity: 0; }
 
   @keyframes scene-a {
@@ -255,6 +327,29 @@
     78% { opacity: 0.9; }
     91% { transform: translateX(181px); opacity: 0.9; }
     92%, 100% { transform: translateX(181px); opacity: 0; }
+  }
+
+  @keyframes packet-slow-v {
+    0%, 4% { transform: translateY(0); opacity: 0; }
+    5% { opacity: 1; }
+    18% { transform: translateY(213px); }
+    31% { transform: translateY(0); opacity: 1; }
+    32%, 100% { transform: translateY(0); opacity: 0; }
+  }
+
+  @keyframes packet-fast-v {
+    0%, 51% { transform: translateY(0); opacity: 0; }
+    52%, 62%, 72% { transform: translateY(0); opacity: 1; }
+    53.5%, 63.5%, 73.5% { transform: translateY(40px); }
+    55%, 65%, 75% { transform: translateY(0); opacity: 1; }
+    76%, 100% { transform: translateY(0); opacity: 0; }
+  }
+
+  @keyframes packet-sync-v {
+    0%, 77% { transform: translateY(0); opacity: 0; }
+    78% { opacity: 0.9; }
+    91% { transform: translateY(63px); opacity: 0.9; }
+    92%, 100% { transform: translateY(63px); opacity: 0; }
   }
 
   @keyframes sync-label {
