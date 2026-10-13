@@ -1,60 +1,67 @@
 <section class="section section--diagram" id="how" aria-label="Before and after: slow origin API versus edge read layer">
-  <svg class="diagram reveal" viewBox="0 0 960 370" role="img" aria-labelledby="diagram-title">
-    <title id="diagram-title">
-      Before: the frontend waits about 1.8 seconds on a slow PIM or ERP API. After: reads are served by an edge network near the customer in about 40 ms, and the origin refreshes in the background.
-    </title>
+  <div class="diagram-wrap reveal">
+    <div class="captions" aria-hidden="true">
+      <p class="caption scene-a"><span class="caption__tag">Before.</span> Every read waits on the origin.</p>
+      <p class="caption scene-b"><span class="caption__tag caption__tag--red">After.</span> Reads served from the edge node nearest the customer.</p>
+    </div>
 
-    <!-- captions -->
-    <g class="scene-a">
-      <text x="0" y="36" class="caption"><tspan class="caption__tag">BEFORE</tspan> every read waits on the origin</text>
-      <text x="270" y="125" class="timer timer--slow">1,800 ms</text>
-    </g>
-    <g class="scene-b">
-      <text x="0" y="36" class="caption"><tspan class="caption__tag caption__tag--red">AFTER</tspan> reads served from the edge, near the customer</text>
-      <text x="270" y="125" class="timer timer--fast">40 ms</text>
-    </g>
+    <svg class="diagram" viewBox="0 48 760 182" role="img" aria-labelledby="diagram-title">
+      <title id="diagram-title">
+        Before: the frontend waits about 1.8 seconds on a slow PIM or ERP API. After: a global edge network answers from the node nearest each customer in about 40 ms, and the origin refreshes in the background.
+      </title>
 
-    <!-- customers -->
-    <g class="node">
-      <line x1="82" y1="165" x2="170" y2="210" />
-      <line x1="82" y1="210" x2="170" y2="210" />
-      <line x1="82" y1="255" x2="170" y2="210" />
-      <circle cx="70" cy="165" r="11" class="dot" />
-      <circle cx="70" cy="210" r="11" class="dot" />
-      <circle cx="70" cy="255" r="11" class="dot" />
-      <text x="70" y="310" class="label">CUSTOMERS</text>
-    </g>
+      <g class="scene-a"><text x="180" y="76" class="timer timer--slow">1,800 ms</text></g>
+      <g class="scene-b"><text x="180" y="76" class="timer timer--fast">40 ms</text></g>
 
-    <!-- frontend -->
-    <rect x="170" y="155" width="200" height="110" class="box" />
-    <text x="270" y="216" class="box__title">FRONTEND</text>
-    <rect x="170" y="280" width="200" height="5" class="wait-bar" />
+      <!-- customers -->
+      <g class="node">
+        <line x1="47" y1="95" x2="110" y2="125" />
+        <line x1="47" y1="125" x2="110" y2="125" />
+        <line x1="47" y1="155" x2="110" y2="125" />
+        <circle cx="40" cy="95" r="7" class="dot" />
+        <circle cx="40" cy="125" r="7" class="dot" />
+        <circle cx="40" cy="155" r="7" class="dot" />
+        <text x="40" y="190" class="label">CUSTOMERS</text>
+      </g>
 
-    <!-- origin (dims once the edge takes over) -->
-    <g class="origin">
-      <line x1="370" y1="210" x2="750" y2="210" class="wire" />
-      <rect x="750" y="155" width="190" height="110" class="box" />
-      <text x="845" y="210" class="box__title">PIM / ERP</text>
-      <text x="845" y="240" class="label">origin API</text>
-    </g>
+      <!-- frontend -->
+      <rect x="110" y="92" width="140" height="66" class="box" />
+      <text x="180" y="129" class="box__title">FRONTEND</text>
+      <rect x="110" y="168" width="140" height="3" class="wait-bar" />
 
-    <!-- edge network -->
-    <g class="edge">
-      <rect x="412" y="120" width="56" height="190" class="edge__band" />
-      <line x1="440" y1="135" x2="440" y2="295" class="edge__spine" />
-      <circle cx="440" cy="140" r="9" class="edge__node" />
-      <circle cx="440" cy="185" r="9" class="edge__node" />
-      <circle cx="440" cy="235" r="9" class="edge__node" />
-      <circle cx="440" cy="280" r="9" class="edge__node" />
-      <text x="440" y="340" class="label label--red">EDGE NETWORK</text>
-    </g>
+      <!-- origin (dims once the edge takes over) -->
+      <g class="origin">
+        <line x1="250" y1="125" x2="600" y2="125" class="wire" />
+        <rect x="600" y="92" width="140" height="66" class="box" />
+        <text x="670" y="124" class="box__title">PIM / ERP</text>
+        <text x="670" y="143" class="label">origin API</text>
+      </g>
 
-    <!-- packets -->
-    <circle cx="376" cy="210" r="7" class="packet packet--slow" />
-    <circle cx="376" cy="210" r="7" class="packet packet--fast" />
-    <circle cx="450" cy="210" r="5" class="packet packet--sync" />
-    <text x="600" y="190" class="label sync-label">background refresh</text>
-  </svg>
+      <!-- global edge network -->
+      <g class="edge">
+        <circle cx="360" cy="125" r="52" class="globe" />
+        <ellipse cx="360" cy="125" rx="52" ry="18" class="globe__line" />
+        <ellipse cx="360" cy="125" rx="26" ry="52" class="globe__line globe__meridian" />
+        <ellipse cx="360" cy="125" rx="26" ry="52" class="globe__line globe__meridian globe__meridian--late" />
+        <circle cx="340" cy="92" r="3" class="pop" />
+        <circle cx="384" cy="98" r="3" class="pop" />
+        <circle cx="398" cy="134" r="3" class="pop" />
+        <circle cx="372" cy="162" r="3" class="pop" />
+        <circle cx="336" cy="156" r="3" class="pop" />
+        <circle cx="362" cy="122" r="3" class="pop" />
+        <circle cx="308" cy="125" r="5" class="pop-near__ring" />
+        <circle cx="308" cy="125" r="5" class="pop-near" />
+        <text x="360" y="203" class="label label--red">EDGE NETWORK</text>
+        <text x="360" y="220" class="label label--small">nearest node serves each customer</text>
+      </g>
+
+      <!-- packets -->
+      <circle cx="256" cy="125" r="5" class="packet packet--slow" />
+      <circle cx="256" cy="125" r="5" class="packet packet--fast" />
+      <circle cx="416" cy="125" r="3.5" class="packet packet--sync" />
+      <text x="508" y="112" class="label label--small sync-label">background refresh</text>
+    </svg>
+  </div>
 </section>
 
 <style>
@@ -62,16 +69,37 @@
     min-height: auto;
     background: var(--black);
     color: var(--white);
-    padding-top: 4rem;
-    padding-bottom: 4rem;
+    padding-top: 3rem;
+    padding-bottom: 3rem;
   }
 
-  .diagram {
+  .diagram-wrap {
     position: relative;
     z-index: 2;
+    max-width: 860px;
+  }
+
+  .captions {
+    display: grid;
+  }
+
+  .caption {
+    grid-area: 1 / 1;
+    margin: 0;
+    font-size: var(--text-body);
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--gray);
+  }
+
+  .caption__tag { color: var(--white); }
+  .caption__tag--red { color: var(--red); }
+
+  .diagram {
+    display: block;
     width: 100%;
-    max-width: 1200px;
     height: auto;
+    margin-top: 1.25rem;
     overflow: visible;
   }
 
@@ -80,24 +108,10 @@
     text-anchor: middle;
   }
 
-  .caption {
-    text-anchor: start;
-    font-family: var(--font-mono);
-    font-size: 22px;
-    fill: var(--gray);
-  }
-
-  .caption__tag {
-    fill: var(--white);
-    font-weight: 700;
-  }
-
-  .caption__tag--red { fill: var(--red); }
-
   .timer {
     font-family: var(--font-heading);
     font-weight: 800;
-    font-size: 40px;
+    font-size: 24px;
     letter-spacing: -0.02em;
   }
 
@@ -106,44 +120,72 @@
 
   .label {
     font-family: var(--font-mono);
-    font-size: 18px;
+    font-size: 11px;
     fill: var(--gray);
     letter-spacing: 0.04em;
   }
 
   .label--red { fill: var(--red); }
+  .label--small { font-size: 10px; letter-spacing: 0; }
 
   .box {
     fill: none;
     stroke: var(--white);
-    stroke-width: 2;
+    stroke-width: 1.5;
   }
 
   .box__title {
     font-family: var(--font-heading);
     font-weight: 800;
-    font-size: 16px;
+    font-size: 12px;
   }
 
   .node line,
   .wire {
     stroke: var(--gray-dark);
-    stroke-width: 2;
+    stroke-width: 1.5;
   }
 
-  .wire { stroke-dasharray: 6 8; }
+  .wire { stroke-dasharray: 4 6; }
   .dot { fill: var(--white); }
 
-  .edge__band { fill: var(--red); opacity: 0.14; }
-  .edge__spine { stroke: var(--red); stroke-width: 2; }
-  .edge__node { fill: var(--red); }
+  .globe { fill: var(--black); stroke: var(--red); stroke-width: 1.5; }
+  .globe__line { fill: none; stroke: var(--red); stroke-width: 1; opacity: 0.45; }
+  .pop { fill: var(--red); opacity: 0.75; }
+  .pop-near { fill: var(--red); }
+  .pop-near__ring { fill: none; stroke: var(--red); stroke-width: 1.5; }
 
   .wait-bar { fill: var(--gray); transform-box: fill-box; transform-origin: left; }
 
   .packet--slow { fill: var(--white); }
   .packet--fast { fill: var(--red); }
   .packet--sync { fill: var(--gray); }
-  .sync-label { font-size: 15px; }
+
+  /* Ambient globe motion: meridians sweep to suggest rotation, nearest node pulses. */
+  .globe__meridian {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: spin 6s linear infinite;
+  }
+
+  .globe__meridian--late { animation-delay: -3s; }
+
+  .pop-near__ring {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pulse 1.6s ease-out infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: scaleX(2); }
+    50% { transform: scaleX(0.05); }
+    100% { transform: scaleX(2); }
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 0.9; }
+    100% { transform: scale(3); opacity: 0; }
+  }
 
   /* One shared 12s timeline: 0-42% before, 42-50% transition, 50-94% after, 94-100% reset. */
   .scene-a, .scene-b, .origin, .edge, .wait-bar, .packet, .sync-label {
@@ -181,9 +223,9 @@
   }
 
   @keyframes edge {
-    0%, 42% { opacity: 0; transform: translateX(40px); }
-    50%, 93% { opacity: 1; transform: translateX(0); }
-    98%, 100% { opacity: 0; transform: translateX(40px); }
+    0%, 42% { opacity: 0; transform: translateY(8px); }
+    50%, 93% { opacity: 1; transform: translateY(0); }
+    98%, 100% { opacity: 0; transform: translateY(8px); }
   }
 
   @keyframes wait-bar {
@@ -195,7 +237,7 @@
   @keyframes packet-slow {
     0%, 4% { transform: translateX(0); opacity: 0; }
     5% { opacity: 1; }
-    18% { transform: translateX(367px); }
+    18% { transform: translateX(339px); }
     31% { transform: translateX(0); opacity: 1; }
     32%, 100% { transform: translateX(0); opacity: 0; }
   }
@@ -203,7 +245,7 @@
   @keyframes packet-fast {
     0%, 51% { transform: translateX(0); opacity: 0; }
     52%, 62%, 72% { transform: translateX(0); opacity: 1; }
-    53.5%, 63.5%, 73.5% { transform: translateX(48px); }
+    53.5%, 63.5%, 73.5% { transform: translateX(42px); }
     55%, 65%, 75% { transform: translateX(0); opacity: 1; }
     76%, 100% { transform: translateX(0); opacity: 0; }
   }
@@ -211,8 +253,8 @@
   @keyframes packet-sync {
     0%, 77% { transform: translateX(0); opacity: 0; }
     78% { opacity: 0.9; }
-    91% { transform: translateX(295px); opacity: 0.9; }
-    92%, 100% { transform: translateX(295px); opacity: 0; }
+    91% { transform: translateX(181px); opacity: 0.9; }
+    92%, 100% { transform: translateX(181px); opacity: 0; }
   }
 
   @keyframes sync-label {
@@ -223,7 +265,8 @@
 
   /* Reduced motion: show the "after" state, no movement. */
   @media (prefers-reduced-motion: reduce) {
-    .scene-a, .scene-b, .origin, .edge, .wait-bar, .packet, .sync-label { animation: none; }
+    .scene-a, .scene-b, .origin, .edge, .wait-bar, .packet, .sync-label,
+    .globe__meridian, .pop-near__ring { animation: none; }
     .scene-a, .wait-bar, .packet { opacity: 0; }
     .scene-b, .edge { opacity: 1; transform: none; }
     .origin { opacity: 0.35; }
