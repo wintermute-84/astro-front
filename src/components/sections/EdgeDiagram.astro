@@ -1,13 +1,19 @@
-<section class="section section--diagram" id="how" aria-label="Before and after: slow origin API versus edge read layer">
+---
+import { t } from '../../i18n';
+
+const s = t(Astro.currentLocale);
+---
+
+<section class="section section--diagram" id="how" aria-label={s.diag_section_label}>
   <div class="diagram-wrap reveal">
     <div class="captions" aria-hidden="true">
-      <p class="caption scene-a"><span class="caption__tag">Before.</span> Every read waits on the origin.</p>
-      <p class="caption scene-b"><span class="caption__tag caption__tag--red">After.</span> Reads served from the edge node nearest the customer.</p>
+      <p class="caption scene-a"><span class="caption__tag">{s.diag_caption_before_tag}</span> {s.diag_caption_before}</p>
+      <p class="caption scene-b"><span class="caption__tag caption__tag--red">{s.diag_caption_after_tag}</span> {s.diag_caption_after}</p>
     </div>
 
     <svg class="diagram diagram--wide" viewBox="0 48 760 182" role="img" aria-labelledby="diagram-title">
       <title id="diagram-title">
-        Before: the frontend waits about 0.8 seconds on a slow PIM or ERP API. After: a global edge network answers from the node nearest each customer in about 45 ms, and the origin refreshes in the background.
+        {s.diag_a11y}
       </title>
 
       <g class="scene-a"><text x="180" y="76" class="timer timer--slow"><tspan class="approx">~</tspan>800 ms</text></g>
@@ -21,20 +27,20 @@
         <circle cx="40" cy="95" r="7" class="dot" />
         <circle cx="40" cy="125" r="7" class="dot" />
         <circle cx="40" cy="155" r="7" class="dot" />
-        <text x="40" y="190" class="label">CUSTOMERS</text>
+        <text x="40" y="190" class="label">{s.diag_customers_lbl}</text>
       </g>
 
       <!-- frontend -->
       <rect x="110" y="92" width="140" height="66" class="box" />
-      <text x="180" y="129" class="box__title">FRONTEND</text>
+      <text x="180" y="129" class="box__title">{s.diag_frontend_box}</text>
       <rect x="110" y="168" width="140" height="3" class="wait-bar" />
 
       <!-- origin (dims once the edge takes over) -->
       <g class="origin">
         <line x1="250" y1="125" x2="600" y2="125" class="wire" />
         <rect x="600" y="92" width="140" height="66" class="box" />
-        <text x="670" y="124" class="box__title">PIM / ERP</text>
-        <text x="670" y="143" class="label">origin API</text>
+        <text x="670" y="124" class="box__title">{s.diag_origin_box}</text>
+        <text x="670" y="143" class="label">{s.diag_origin_lbl}</text>
       </g>
 
       <!-- global edge network -->
@@ -51,20 +57,20 @@
         <circle cx="362" cy="122" r="3" class="pop" />
         <circle cx="308" cy="125" r="5" class="pop-near__ring" />
         <circle cx="308" cy="125" r="5" class="pop-near" />
-        <text x="360" y="203" class="label label--red">EDGE NETWORK</text>
-        <text x="360" y="220" class="label label--small">nearest node server</text>
+        <text x="360" y="203" class="label label--red">{s.diag_edge_lbl}</text>
+        <text x="360" y="220" class="label label--small">{s.diag_nearest_lbl}</text>
       </g>
 
       <!-- packets -->
       <circle cx="256" cy="125" r="5" class="packet packet--slow" />
       <circle cx="256" cy="125" r="5" class="packet packet--fast" />
       <circle cx="416" cy="125" r="3.5" class="packet packet--sync" />
-      <text x="508" y="112" class="label label--small sync-label">background refresh</text>
+      <text x="508" y="112" class="label label--small sync-label">{s.diag_refresh_lbl}</text>
     </svg>
 
     <svg class="diagram diagram--tall" viewBox="-50 0 365 440" role="img" aria-labelledby="diagram-title-tall">
       <title id="diagram-title-tall">
-        Before: the frontend waits about 0.8 seconds on a slow PIM or ERP API. After: a global edge network answers from the node nearest each customer in about 45 ms, and the origin refreshes in the background.
+        {s.diag_a11y}
       </title>
 
       <!-- customers -->
@@ -75,12 +81,12 @@
         <circle cx="90" cy="44" r="7" class="dot" />
         <circle cx="130" cy="44" r="7" class="dot" />
         <circle cx="170" cy="44" r="7" class="dot" />
-        <text x="130" y="18" class="label">CUSTOMERS</text>
+        <text x="130" y="18" class="label">{s.diag_customers_lbl}</text>
       </g>
 
       <!-- frontend -->
       <rect x="60" y="80" width="140" height="56" class="box" />
-      <text x="130" y="112" class="box__title">FRONTEND</text>
+      <text x="130" y="112" class="box__title">{s.diag_frontend_box}</text>
       <rect x="60" y="141" width="140" height="3" class="wait-bar" />
       <g class="scene-a"><text x="262" y="114" class="timer timer--slow"><tspan class="approx">~</tspan>800 ms</text></g>
       <g class="scene-b"><text x="262" y="114" class="timer timer--fast"><tspan class="approx">~</tspan>45 ms</text></g>
@@ -89,8 +95,8 @@
       <g class="origin">
         <line x1="130" y1="144" x2="130" y2="370" class="wire" />
         <rect x="60" y="370" width="140" height="56" class="box" />
-        <text x="130" y="396" class="box__title">PIM / ERP</text>
-        <text x="130" y="414" class="label">origin API</text>
+        <text x="130" y="396" class="box__title">{s.diag_origin_box}</text>
+        <text x="130" y="414" class="label">{s.diag_origin_lbl}</text>
       </g>
 
       <!-- global edge network; nearest node faces the customers -->
@@ -107,15 +113,15 @@
         <circle cx="132" cy="252" r="3" class="pop" />
         <circle cx="130" cy="202" r="5" class="pop-near__ring" />
         <circle cx="130" cy="202" r="5" class="pop-near" />
-        <text x="255" y="246" class="label label--red">EDGE NETWORK</text>
-        <text x="255" y="262" class="label label--small">nearest node server</text>
+        <text x="255" y="246" class="label label--red">{s.diag_edge_lbl}</text>
+        <text x="255" y="262" class="label label--small">{s.diag_nearest_lbl}</text>
       </g>
 
       <!-- packets -->
       <circle cx="130" cy="152" r="5" class="packet packet--slow packet--v" />
       <circle cx="130" cy="152" r="5" class="packet packet--fast packet--v" />
       <circle cx="130" cy="302" r="3.5" class="packet packet--sync packet--v" />
-      <text x="255" y="340" class="label label--small sync-label">background refresh</text>
+      <text x="255" y="340" class="label label--small sync-label">{s.diag_refresh_lbl}</text>
     </svg>
   </div>
 </section>

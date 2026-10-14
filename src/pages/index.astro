@@ -1,36 +1,5 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Nav from '../components/Nav.astro';
-import Hero from '../components/sections/Hero.astro';
-import EdgeDiagram from '../components/sections/EdgeDiagram.astro';
-import Offers from '../components/sections/Offers.astro';
-import Agency from '../components/sections/Agency.astro';
-import Contact from '../components/sections/Contact.astro';
-import Footer from '../components/Footer.astro';
-import { PAGE_TITLE, SITE_DESCRIPTION } from '../consts';
+import Page from '../components/Page.astro';
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <BaseHead title={PAGE_TITLE} description={SITE_DESCRIPTION} preloadHero />
-  </head>
-  <body>
-    <noscript>
-      <style>.reveal { opacity: 1 !important; transform: none !important; }</style>
-    </noscript>
-    <Nav />
-    <main>
-      <Hero />
-      <EdgeDiagram />
-      <Offers />
-      <Agency />
-      <Contact />
-    </main>
-    <Footer />
-    <script>
-      import { initReveal } from '../scripts/reveal.ts';
-      initReveal();
-    </script>
-  </body>
-</html>
+<Page />

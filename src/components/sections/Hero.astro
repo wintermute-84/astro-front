@@ -1,4 +1,7 @@
 ---
+import { t, lines } from '../../i18n';
+
+const s = t(Astro.currentLocale);
 import SectionBg from '../SectionBg.astro';
 ---
 
@@ -12,19 +15,18 @@ import SectionBg from '../SectionBg.astro';
     priority
   />
   <div class="section__overlay section__overlay--light"></div>
-  <span class="section__meta">for agencies + b2b teams</span>
+  <span class="section__meta">{s.hero_meta}</span>
 
   <div class="section__inner">
     <h1 class="heading-xl">
-      SLOW API.<br />
-      <span class="accent">FAST EDGE.</span>
+      {lines(s.hero_h).map((l, i, all) => (i === all.length - 1 ? <span class="accent">{l}</span> : <>{l}<br /></>))}
     </h1>
     <p class="body-text">
-      <strong>Skip the expensive replatform.</strong> An edge layer in front of your slow stock, price and PIM APIs.
+      <strong>{s.hero_lead_strong}</strong> {s.hero_lead}
     </p>
     <div class="actions">
-      <a href="#contact" class="btn" data-offer="audit">BOOK THE AUDIT →</a>
-      <a href="#offers" class="link">SEE THE SCOPE ↓</a>
+      <a href="#contact" class="btn" data-offer="audit">{s.hero_btn}</a>
+      <a href="#offers" class="link">{s.hero_link}</a>
     </div>
   </div>
 </section>

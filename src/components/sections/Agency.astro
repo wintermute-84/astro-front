@@ -1,14 +1,20 @@
+---
+import { t, lines } from '../../i18n';
+
+const s = t(Astro.currentLocale);
+---
+
 <section class="section section--agency" id="agency">
-  <span class="section__meta">white-label</span>
+  <span class="section__meta">{s.agency_meta}</span>
 
   <div class="section__inner">
-    <h2 class="heading-lg reveal">YOUR CLIENT.<br />YOUR BRAND.</h2>
+    <h2 class="heading-lg reveal">{lines(s.agency_h).map((l, i) => <>{i > 0 && <br />}{l}</>)}</h2>
     <p class="body-text reveal">
-      <strong>Speed for your client, without the replatform pitch.</strong> We build the edge layer behind the scenes. You keep the relationship, the delivery lead and the credit.
+      <strong>{s.agency_lead_strong}</strong> {s.agency_lead}
     </p>
     <div class="actions reveal">
-      <a href="#contact" class="btn btn--dark" data-offer="agency">TALK WHITE-LABEL →</a>
-      <span class="offer__note">Fixed scope. Clear handover.</span>
+      <a href="#contact" class="btn btn--dark" data-offer="agency">{s.agency_btn}</a>
+      <span class="offer__note">{s.agency_note}</span>
     </div>
   </div>
 </section>

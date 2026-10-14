@@ -7,6 +7,11 @@ export default defineConfig({
   site: "https://3dreamlab.com",
   integrations: [sitemap()],
   build: { inlineStylesheets: "always" },
+  i18n: {
+    locales: ["en", "fi", "sv"],
+    defaultLocale: "en",
+    routing: { prefixDefaultLocale: false },
+  },
   adapter: cloudflare({
     platformProxy: {
       enabled: true,

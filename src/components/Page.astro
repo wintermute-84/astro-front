@@ -1,0 +1,38 @@
+---
+import BaseHead from './BaseHead.astro';
+import Nav from './Nav.astro';
+import Hero from './sections/Hero.astro';
+import EdgeDiagram from './sections/EdgeDiagram.astro';
+import Offers from './sections/Offers.astro';
+import Agency from './sections/Agency.astro';
+import Contact from './sections/Contact.astro';
+import Footer from './Footer.astro';
+import { t } from '../i18n';
+
+const s = t(Astro.currentLocale);
+---
+
+<!doctype html>
+<html lang={s.html_lang}>
+  <head>
+    <BaseHead title={s.meta_title} description={s.meta_description} preloadHero />
+  </head>
+  <body>
+    <noscript>
+      <style>.reveal { opacity: 1 !important; transform: none !important; }</style>
+    </noscript>
+    <Nav />
+    <main>
+      <Hero />
+      <EdgeDiagram />
+      <Offers />
+      <Agency />
+      <Contact />
+    </main>
+    <Footer />
+    <script>
+      import { initReveal } from '../scripts/reveal.ts';
+      initReveal();
+    </script>
+  </body>
+</html>

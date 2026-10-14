@@ -1,6 +1,12 @@
+---
+import { t } from '../i18n';
+
+const s = t(Astro.currentLocale);
+---
+
 <footer class="footer">
-  <span>© {new Date().getFullYear()} 3DreamLab · Finland</span>
-  <span>Form data is used only to reply to you, never shared.</span>
+  <span>© {new Date().getFullYear()} 3DreamLab · {s.footer_country}</span>
+  <span>{s.footer_privacy}</span>
 </footer>
 
 <style>

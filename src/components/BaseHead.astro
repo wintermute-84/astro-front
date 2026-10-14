@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { LOCALES, homePath, t } from '../i18n';
 
 interface Props {
   title: string;
@@ -24,13 +25,18 @@ const { title, description, image = '/HEAD.jpeg', preloadHero = false } = Astro.
     fetchpriority="high"
   />
 )}
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <meta name="generator" content={Astro.generator} />
 <link rel="canonical" href={canonicalURL} />
+{LOCALES.map((l) => <link rel="alternate" hreflang={l} href={new URL(homePath(l), Astro.site)} />)}
+<link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site)} />
 <title>{title}</title>
 <meta name="title" content={title} />
 <meta name="description" content={description} />
 <meta property="og:type" content="website" />
+<meta property="og:locale" content={t(Astro.currentLocale).og_locale} />
 <meta property="og:url" content={Astro.url} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />

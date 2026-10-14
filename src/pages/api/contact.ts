@@ -8,6 +8,7 @@ interface ContactBody {
   email?: string;
   message?: string;
   offer?: string;
+  lang?: string;
   turnstileToken?: string;
 }
 
@@ -75,6 +76,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const email = body.email?.trim() ?? '';
   const message = body.message?.trim() ?? '';
   const offer = OFFERS[body.offer ?? ''] ?? 'Not specified';
+  const lang = ['en', 'fi', 'sv'].includes(body.lang ?? '') ? body.lang! : 'en';
   const turnstileToken = body.turnstileToken ?? '';
 
   if (!name || name.length > 100) return json({ error: 'Name is required (max 100 chars).' }, 422);
@@ -91,7 +93,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     from: '3DreamLab <contact@3dreamlab.com>',
     to: [env.CONTACT_TO_EMAIL],
     replyTo: email,
-    subject: `3DreamLab ${offer} inquiry from ${sanitizeSubjectValue(name)}`,
+    subject: `3DreamLab ${offer} inquiry (${lang}) from ${sanitizeSubjectValue(name)}`,
     html: `
       <p><strong>Name:</strong> ${escapeHtml(name)}</p>
       <p><strong>Email:</strong> ${escapeHtml(email)}</p>
