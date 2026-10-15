@@ -2,127 +2,342 @@
 import { t } from '../../i18n';
 
 const s = t(Astro.currentLocale);
+
+/*
+ * Slides 2 and 3 have many packets with individual timings, so their keyframes are
+ * generated here from small timelines. Every slide shares the 12s loop:
+ * 0-5s before, 5-6s crossfade, 6-11.3s after, then reset.
+ */
+type Orient = 'w' | 't';
+type Fr = [number, number, number, string]; // [seconds, distance px, opacity, fill]
+type Pt = [number, number];
+const W = 'var(--white)', R = 'var(--red)', G = 'var(--gray)', T = 'transparent';
+const pc = (sec: number) => ((Math.min(12, Math.max(0, sec)) / 12) * 100).toFixed(2) + '%';
+
+let css = '';
+let uid = 0;
+
+interface Flow {
+  orient: Orient;
+  viewBox: string;
+  a11y: string;
+  dots: Pt[];
+  dotR: number;
+  conv: Pt;
+  srcLbl: Pt;
+  srcText: string;
+  wire: [Pt, Pt];
+  globe: { c: Pt; r: number };
+  edgeLbl: Pt;
+  roleLbl: Pt;
+  roleText: string;
+  box: [number, number, number, number];
+  title: Pt;
+  titleText: string;
+  sub: Pt;
+  subText: string;
+  wait: [number, number, number, number];
+  waitCls: string;
+  strainCls: string;
+  metric: Pt;
+  metricLbl: Pt;
+  metricBefore: string; // big value in the before scene ('' when a counter is used)
+  metricAfter: string;
+  metricBeforeLbl: string;
+  metricAfterLbl: string;
+  packets: { cls: string; at: Pt; r: number; hollow?: boolean }[];
+  texts: { cls: string; at: Pt; text: string; kind: 'num' | 'label' | 'x'; final?: boolean }[];
+}
+
+function build(kind: 2 | 3, orient: Orient): Flow {
+  const wide = orient === 'w';
+  const ax = wide ? 'X' : 'Y';
+  const anim = (frames: Fr[]) => {
+    const cls = `g${kind}${orient}${uid++}`;
+    const first = frames[0], last = frames[frames.length - 1];
+    const all: Fr[] = [[0, first[1], 0, first[3]], ...frames, [12, last[1], 0, last[3]]];
+    css += `@keyframes ${cls}{${all.map(([sec, d, o, f]) => `${pc(sec)}{transform:translate${ax}(${d}px);opacity:${o};fill:${f}}`).join('')}}.${cls}{animation:${cls} 12s linear infinite}`;
+    return cls;
+  };
+  const show = (on: number, off: number, fill = G) => anim([[on - 0.05, 0, 0, fill], [on, 0, 1, fill], [off, 0, 1, fill], [off + 0.05, 0, 0, fill]]);
+  const packets: Flow['packets'] = [];
+  const texts: Flow['texts'] = [];
+
+  if (kind === 2) {
+    const g = wide
+      ? { dots: [85, 101, 117, 133, 149, 165].map((y): Pt => [40, y]), conv: [110, 125] as Pt, srcLbl: [40, 192] as Pt, wire: [[110, 125], [600, 125]] as [Pt, Pt], globe: { c: [300, 125] as Pt, r: 44 }, edgeLbl: [300, 192] as Pt, roleLbl: [300, 208] as Pt, box: [600, 92, 140, 66] as Flow['box'], title: [670, 124] as Pt, sub: [670, 143] as Pt, wait: [600, 168, 140, 3] as Flow['wait'], metric: [670, 68] as Pt, metricLbl: [670, 84] as Pt, deliver: 484, drop: 300, x: [410, 112] as Pt, ring: 141, meterStart: [344, 125] as Pt, meter: 250, wireLbl: [472, 112] as Pt }
+      : { dots: [80, 100, 120, 140, 160, 180].map((x): Pt => [x, 44]), conv: [130, 80] as Pt, srcLbl: [130, 18] as Pt, wire: [[130, 80], [130, 300]] as [Pt, Pt], globe: { c: [130, 170] as Pt, r: 42 }, edgeLbl: [255, 166] as Pt, roleLbl: [255, 182] as Pt, box: [60, 300, 140, 56] as Flow['box'], title: [130, 326] as Pt, sub: [130, 344] as Pt, wait: [60, 361, 140, 3] as Flow['wait'], metric: [262, 330] as Pt, metricLbl: [262, 346] as Pt, deliver: 214, drop: 120, x: [148, 200] as Pt, ring: 43, meterStart: [130, 212] as Pt, meter: 82, wireLbl: [255, 256] as Pt };
+    const start = g.conv;
+
+    // Before: a burst; 5 events crawl into the iPaaS, 3 die on the way (sender gives up).
+    [0, 1, 0, 1, 0, 1, 0, 0].forEach((dropped, i) => {
+      const t0 = 0.6 + 0.28 * i;
+      const frames: Fr[] = dropped
+        ? [[t0 - 0.05, 0, 0, W], [t0, 0, 1, W], [t0 + 0.9, g.drop, 1, W], [t0 + 1, g.drop, 1, G], [t0 + 1.4, g.drop, 0, G]]
+        : [[t0 - 0.05, 0, 0, W], [t0, 0, 1, W], [t0 + 1.4, g.deliver, 1, W], [t0 + 1.55, g.deliver, 0, W]];
+      packets.push({ cls: anim(frames), at: start, r: 5 });
+    });
+    texts.push({ cls: show(2, 4.9), at: g.x, text: '×', kind: 'x' });
+
+    // After: the same burst is accepted at the edge, held, then released one by one.
+    const c = g.globe.c;
+    for (let i = 0; i < 6; i++) {
+      const t0 = 6.2 + 0.15 * i;
+      packets.push({ cls: anim([[t0 - 0.05, 0, 0, W], [t0, 0, 1, W], [t0 + 0.45, g.ring, 1, W], [t0 + 0.5, g.ring, 0, W]]), at: start, r: 5 });
+      const held = 6.65 + 0.15 * i;
+      const leave = 7.7 + 0.55 * i;
+      const at: Pt = [c[0] + ((i % 3) - 1) * 13, c[1] + (i < 3 ? -7 : 7)];
+      packets.push({ cls: anim([[held - 0.05, 0, 0, R], [held, 0, 1, R], [leave, 0, 1, R], [leave + 0.05, 0, 0, R]]), at, r: 4 });
+      packets.push({ cls: anim([[leave - 0.05, 0, 0, R], [leave, 0, 1, R], [leave + 0.75, g.meter, 1, R], [leave + 0.85, g.meter, 0, R]]), at: g.meterStart, r: 5 });
+    }
+    texts.push({ cls: show(7.6, 11.2), at: g.wireLbl, text: s.s2_wire_lbl, kind: 'label' });
+
+    return {
+      orient, viewBox: wide ? '0 48 760 182' : '-50 0 365 400', a11y: s.s2_a11y,
+      dots: g.dots, dotR: 5, conv: g.conv, srcLbl: g.srcLbl, srcText: s.s2_src_lbl, wire: g.wire,
+      globe: g.globe, edgeLbl: g.edgeLbl, roleLbl: g.roleLbl, roleText: s.s2_edge_role,
+      box: g.box, title: g.title, titleText: s.s2_box, sub: g.sub, subText: s.s2_box_sub,
+      wait: g.wait, waitCls: 'wait2', strainCls: 'strain', metric: g.metric, metricLbl: g.metricLbl,
+      metricBefore: '10 s', metricAfter: '30 ms', metricBeforeLbl: s.s2_metric_before, metricAfterLbl: s.s2_metric_after,
+      packets, texts,
+    };
+  }
+
+  const g = wide
+    ? { dots: [95, 115, 135, 155].map((y): Pt => [40, y]), conv: [110, 125] as Pt, srcLbl: [40, 192] as Pt, wire: [[110, 125], [600, 125]] as [Pt, Pt], globe: { c: [330, 125] as Pt, r: 44 }, edgeLbl: [330, 192] as Pt, roleLbl: [330, 208] as Pt, box: [600, 92, 140, 66] as Flow['box'], title: [670, 124] as Pt, sub: [670, 143] as Pt, wait: [600, 168, 140, 3] as Flow['wait'], metric: [670, 68] as Pt, metricLbl: [670, 84] as Pt, full: 484, ring: 171, x: [272, 110] as Pt, gateLbl: [330, 70] as Pt }
+    : { dots: [90, 117, 143, 170].map((x): Pt => [x, 44]), conv: [130, 80] as Pt, srcLbl: [130, 18] as Pt, wire: [[130, 80], [130, 330]] as [Pt, Pt], globe: { c: [130, 190] as Pt, r: 42 }, edgeLbl: [255, 186] as Pt, roleLbl: [255, 202] as Pt, box: [60, 330, 140, 56] as Flow['box'], title: [130, 356] as Pt, sub: [130, 374] as Pt, wait: [60, 391, 140, 3] as Flow['wait'], metric: [130, 420] as Pt, metricLbl: [130, 436] as Pt, full: 244, ring: 63, x: [150, 140] as Pt, gateLbl: [255, 150] as Pt };
+  const start = g.conv;
+  const HOLLOW = 5;
+
+  // Before: 12 calls (one without a key, a burst from one partner) all land on the API.
+  for (let i = 0; i < 12; i++) {
+    const t0 = 0.3 + 0.3 * i;
+    const f = i === HOLLOW ? T : W;
+    packets.push({ cls: anim([[t0 - 0.05, 0, 0, f], [t0, 0, 1, f], [t0 + 1, g.full, 1, f], [t0 + 1.1, g.full, 0, f]]), at: start, r: 5, hollow: i === HOLLOW });
+    const on = 1.3 + 0.3 * i;
+    texts.push({ cls: show(on, i < 11 ? on + 0.3 : 5), at: g.metric, text: String(i + 1), kind: 'num' });
+  }
+
+  // After: the edge lets the first call of each partner through and stops the rest.
+  const PASS = [0, 1, 3, 6];
+  const arrivals: number[] = [];
+  for (let i = 0; i < 12; i++) {
+    const t0 = 6.2 + 0.33 * i;
+    if (PASS.includes(i)) {
+      packets.push({ cls: anim([[t0 - 0.05, 0, 0, W], [t0, 0, 1, W], [t0 + 0.4, g.ring, 1, W], [t0 + 0.45, g.ring, 1, R], [t0 + 1, g.full, 1, R], [t0 + 1.1, g.full, 0, R]]), at: start, r: 5 });
+      arrivals.push(t0 + 1);
+    } else {
+      const f = i === HOLLOW ? T : W;
+      packets.push({ cls: anim([[t0 - 0.05, 0, 0, f], [t0, 0, 1, f], [t0 + 0.4, g.ring, 1, f], [t0 + 0.5, g.ring, 1, G], [t0 + 0.9, g.ring, 0, G]]), at: start, r: 5, hollow: i === HOLLOW });
+    }
+  }
+  arrivals.forEach((on, k) => {
+    const last = k === arrivals.length - 1;
+    texts.push({ cls: show(on, last ? 11.3 : arrivals[k + 1], R), at: g.metric, text: String(k + 1), kind: 'num', final: last });
+  });
+  texts.push({ cls: show(7.3, 11.2), at: g.x, text: '×', kind: 'x' });
+  const noKeyAt = 6.2 + 0.33 * HOLLOW + 0.4;
+  texts.push({ cls: show(noKeyAt, noKeyAt + 1), at: g.gateLbl, text: s.s3_nokey, kind: 'label' });
+  texts.push({ cls: show(noKeyAt + 1, 11.2), at: g.gateLbl, text: s.s3_limited, kind: 'label', final: true });
+
+  return {
+    orient, viewBox: wide ? '0 48 760 182' : '-50 0 365 446', a11y: s.s3_a11y,
+    dots: g.dots, dotR: 6, conv: g.conv, srcLbl: g.srcLbl, srcText: s.s3_src_lbl, wire: g.wire,
+    globe: g.globe, edgeLbl: g.edgeLbl, roleLbl: g.roleLbl, roleText: s.s3_edge_role,
+    box: g.box, title: g.title, titleText: s.s3_box, sub: g.sub, subText: s.s3_box_sub,
+    wait: g.wait, waitCls: 'wait3', strainCls: 'strain', metric: g.metric, metricLbl: g.metricLbl,
+    metricBefore: '', metricAfter: '', metricBeforeLbl: s.s3_metric_before, metricAfterLbl: s.s3_metric_after,
+    packets, texts,
+  };
+}
+
+const flowSlides = [
+  { tab: s.s2_tab, h: s.s2_h, before: s.s2_before, after: s.s2_after, benefit: s.s2_benefit, flows: [build(2, 'w'), build(2, 't')] },
+  { tab: s.s3_tab, h: s.s3_h, before: s.s3_before, after: s.s3_after, benefit: s.s3_benefit, flows: [build(3, 'w'), build(3, 't')] },
+];
+const tabs = [s.s1_tab, ...flowSlides.map((f) => f.tab)];
 ---
 
-<section class="section section--diagram" id="how" aria-label={s.diag_section_label}>
-  <div class="diagram-wrap reveal">
-    <div class="captions" aria-hidden="true">
-      <p class="caption scene-a"><span class="caption__tag">{s.diag_caption_before_tag}</span> {s.diag_caption_before}</p>
-      <p class="caption scene-b"><span class="caption__tag caption__tag--red">{s.diag_caption_after_tag}</span> {s.diag_caption_after}</p>
+<section class="section section--diagram" id="how" aria-label={s.slides_label}>
+  <style is:inline set:html={css}></style>
+  <div class="slider reveal">
+    <div class="tabs" role="tablist" aria-label={s.slides_label}>
+      {tabs.map((label, i) => (
+        <button type="button" class="tab" role="tab" id={`tab-${i}`} aria-controls={`slide-${i}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1}>
+          {label}
+        </button>
+      ))}
     </div>
 
-    <svg class="diagram diagram--wide" viewBox="0 48 760 182" role="img" aria-labelledby="diagram-title">
-      <title id="diagram-title">
-        {s.diag_a11y}
-      </title>
+    <div class="track">
+      <article class="slide is-active" id="slide-0" role="tabpanel" aria-labelledby="tab-0">
+        <h3 class="slide__h">{s.s1_h}</h3>
+        <div class="captions" aria-hidden="true">
+          <p class="caption scene-a"><span class="caption__tag">{s.diag_caption_before_tag}</span> {s.diag_caption_before}</p>
+          <p class="caption scene-b"><span class="caption__tag caption__tag--red">{s.diag_caption_after_tag}</span> {s.diag_caption_after}</p>
+        </div>
+        <svg class="diagram diagram--wide" viewBox="0 48 760 182" role="img" aria-labelledby="diagram-title">
+          <title id="diagram-title">
+            {s.diag_a11y}
+          </title>
 
-      <g class="scene-a"><text x="180" y="76" class="timer timer--slow"><tspan class="approx">~</tspan>800 ms</text></g>
-      <g class="scene-b"><text x="180" y="76" class="timer timer--fast"><tspan class="approx">~</tspan>45 ms</text></g>
+          <g class="scene-a"><text x="180" y="76" class="timer timer--slow"><tspan class="approx">~</tspan>800 ms</text></g>
+          <g class="scene-b"><text x="180" y="76" class="timer timer--fast"><tspan class="approx">~</tspan>45 ms</text></g>
 
-      <!-- customers -->
-      <g class="node">
-        <line x1="47" y1="95" x2="110" y2="125" />
-        <line x1="47" y1="125" x2="110" y2="125" />
-        <line x1="47" y1="155" x2="110" y2="125" />
-        <circle cx="40" cy="95" r="7" class="dot" />
-        <circle cx="40" cy="125" r="7" class="dot" />
-        <circle cx="40" cy="155" r="7" class="dot" />
-        <text x="40" y="190" class="label">{s.diag_customers_lbl}</text>
-      </g>
+          <!-- customers -->
+          <g class="node">
+            <line x1="47" y1="95" x2="110" y2="125" />
+            <line x1="47" y1="125" x2="110" y2="125" />
+            <line x1="47" y1="155" x2="110" y2="125" />
+            <circle cx="40" cy="95" r="7" class="dot" />
+            <circle cx="40" cy="125" r="7" class="dot" />
+            <circle cx="40" cy="155" r="7" class="dot" />
+            <text x="40" y="190" class="label">{s.diag_customers_lbl}</text>
+          </g>
 
-      <!-- frontend -->
-      <rect x="110" y="92" width="140" height="66" class="box" />
-      <text x="180" y="129" class="box__title">{s.diag_frontend_box}</text>
-      <rect x="110" y="168" width="140" height="3" class="wait-bar" />
+          <!-- frontend -->
+          <rect x="110" y="92" width="140" height="66" class="box" />
+          <text x="180" y="129" class="box__title">{s.diag_frontend_box}</text>
+          <rect x="110" y="168" width="140" height="3" class="wait-bar" />
 
-      <!-- origin (dims once the edge takes over) -->
-      <g class="origin">
-        <line x1="250" y1="125" x2="600" y2="125" class="wire" />
-        <rect x="600" y="92" width="140" height="66" class="box" />
-        <text x="670" y="124" class="box__title">{s.diag_origin_box}</text>
-        <text x="670" y="143" class="label">{s.diag_origin_lbl}</text>
-      </g>
+          <!-- origin (dims once the edge takes over) -->
+          <g class="origin">
+            <line x1="250" y1="125" x2="600" y2="125" class="wire" />
+            <rect x="600" y="92" width="140" height="66" class="box" />
+            <text x="670" y="124" class="box__title">{s.diag_origin_box}</text>
+            <text x="670" y="143" class="label">{s.diag_origin_lbl}</text>
+          </g>
 
-      <!-- global edge network -->
-      <g class="edge">
-        <circle cx="360" cy="125" r="52" class="globe" />
-        <ellipse cx="360" cy="125" rx="52" ry="18" class="globe__line" />
-        <ellipse cx="360" cy="125" rx="26" ry="52" class="globe__line globe__meridian" />
-        <ellipse cx="360" cy="125" rx="26" ry="52" class="globe__line globe__meridian globe__meridian--late" />
-        <circle cx="340" cy="92" r="3" class="pop" />
-        <circle cx="384" cy="98" r="3" class="pop" />
-        <circle cx="398" cy="134" r="3" class="pop" />
-        <circle cx="372" cy="162" r="3" class="pop" />
-        <circle cx="336" cy="156" r="3" class="pop" />
-        <circle cx="362" cy="122" r="3" class="pop" />
-        <circle cx="308" cy="125" r="5" class="pop-near__ring" />
-        <circle cx="308" cy="125" r="5" class="pop-near" />
-        <text x="360" y="203" class="label label--red">{s.diag_edge_lbl}</text>
-        <text x="360" y="220" class="label label--small">{s.diag_nearest_lbl}</text>
-      </g>
+          <!-- global edge network -->
+          <g class="edge">
+            <circle cx="360" cy="125" r="52" class="globe" />
+            <ellipse cx="360" cy="125" rx="52" ry="18" class="globe__line" />
+            <ellipse cx="360" cy="125" rx="26" ry="52" class="globe__line globe__meridian" />
+            <ellipse cx="360" cy="125" rx="26" ry="52" class="globe__line globe__meridian globe__meridian--late" />
+            <circle cx="340" cy="92" r="3" class="pop" />
+            <circle cx="384" cy="98" r="3" class="pop" />
+            <circle cx="398" cy="134" r="3" class="pop" />
+            <circle cx="372" cy="162" r="3" class="pop" />
+            <circle cx="336" cy="156" r="3" class="pop" />
+            <circle cx="362" cy="122" r="3" class="pop" />
+            <circle cx="308" cy="125" r="5" class="pop-near__ring" />
+            <circle cx="308" cy="125" r="5" class="pop-near" />
+            <text x="360" y="203" class="label label--red">{s.diag_edge_lbl}</text>
+            <text x="360" y="220" class="label label--small">{s.diag_nearest_lbl}</text>
+          </g>
 
-      <!-- packets -->
-      <circle cx="256" cy="125" r="5" class="packet packet--slow" />
-      <circle cx="256" cy="125" r="5" class="packet packet--fast" />
-      <circle cx="416" cy="125" r="3.5" class="packet packet--sync" />
-      <text x="508" y="112" class="label label--small sync-label">{s.diag_refresh_lbl}</text>
-    </svg>
+          <!-- packets -->
+          <circle cx="256" cy="125" r="5" class="packet packet--slow" />
+          <circle cx="256" cy="125" r="5" class="packet packet--fast" />
+          <circle cx="416" cy="125" r="3.5" class="packet packet--sync" />
+          <text x="508" y="112" class="label label--small sync-label">{s.diag_refresh_lbl}</text>
+        </svg>
 
-    <svg class="diagram diagram--tall" viewBox="-50 0 365 440" role="img" aria-labelledby="diagram-title-tall">
-      <title id="diagram-title-tall">
-        {s.diag_a11y}
-      </title>
+        <svg class="diagram diagram--tall" viewBox="-50 0 365 440" role="img" aria-labelledby="diagram-title-tall">
+          <title id="diagram-title-tall">
+            {s.diag_a11y}
+          </title>
 
-      <!-- customers -->
-      <g class="node">
-        <line x1="90" y1="51" x2="130" y2="80" />
-        <line x1="130" y1="51" x2="130" y2="80" />
-        <line x1="170" y1="51" x2="130" y2="80" />
-        <circle cx="90" cy="44" r="7" class="dot" />
-        <circle cx="130" cy="44" r="7" class="dot" />
-        <circle cx="170" cy="44" r="7" class="dot" />
-        <text x="130" y="18" class="label">{s.diag_customers_lbl}</text>
-      </g>
+          <!-- customers -->
+          <g class="node">
+            <line x1="90" y1="51" x2="130" y2="80" />
+            <line x1="130" y1="51" x2="130" y2="80" />
+            <line x1="170" y1="51" x2="130" y2="80" />
+            <circle cx="90" cy="44" r="7" class="dot" />
+            <circle cx="130" cy="44" r="7" class="dot" />
+            <circle cx="170" cy="44" r="7" class="dot" />
+            <text x="130" y="18" class="label">{s.diag_customers_lbl}</text>
+          </g>
 
-      <!-- frontend -->
-      <rect x="60" y="80" width="140" height="56" class="box" />
-      <text x="130" y="112" class="box__title">{s.diag_frontend_box}</text>
-      <rect x="60" y="141" width="140" height="3" class="wait-bar" />
-      <g class="scene-a"><text x="262" y="114" class="timer timer--slow"><tspan class="approx">~</tspan>800 ms</text></g>
-      <g class="scene-b"><text x="262" y="114" class="timer timer--fast"><tspan class="approx">~</tspan>45 ms</text></g>
+          <!-- frontend -->
+          <rect x="60" y="80" width="140" height="56" class="box" />
+          <text x="130" y="112" class="box__title">{s.diag_frontend_box}</text>
+          <rect x="60" y="141" width="140" height="3" class="wait-bar" />
+          <g class="scene-a"><text x="262" y="114" class="timer timer--slow"><tspan class="approx">~</tspan>800 ms</text></g>
+          <g class="scene-b"><text x="262" y="114" class="timer timer--fast"><tspan class="approx">~</tspan>45 ms</text></g>
 
-      <!-- origin -->
-      <g class="origin">
-        <line x1="130" y1="144" x2="130" y2="370" class="wire" />
-        <rect x="60" y="370" width="140" height="56" class="box" />
-        <text x="130" y="396" class="box__title">{s.diag_origin_box}</text>
-        <text x="130" y="414" class="label">{s.diag_origin_lbl}</text>
-      </g>
+          <!-- origin -->
+          <g class="origin">
+            <line x1="130" y1="144" x2="130" y2="370" class="wire" />
+            <rect x="60" y="370" width="140" height="56" class="box" />
+            <text x="130" y="396" class="box__title">{s.diag_origin_box}</text>
+            <text x="130" y="414" class="label">{s.diag_origin_lbl}</text>
+          </g>
 
-      <!-- global edge network; nearest node faces the customers -->
-      <g class="edge">
-        <circle cx="130" cy="250" r="48" class="globe" />
-        <ellipse cx="130" cy="250" rx="48" ry="16" class="globe__line" />
-        <ellipse cx="130" cy="250" rx="24" ry="48" class="globe__line globe__meridian" />
-        <ellipse cx="130" cy="250" rx="24" ry="48" class="globe__line globe__meridian globe__meridian--late" />
-        <circle cx="110" cy="232" r="3" class="pop" />
-        <circle cx="154" cy="226" r="3" class="pop" />
-        <circle cx="166" cy="258" r="3" class="pop" />
-        <circle cx="140" cy="284" r="3" class="pop" />
-        <circle cx="104" cy="276" r="3" class="pop" />
-        <circle cx="132" cy="252" r="3" class="pop" />
-        <circle cx="130" cy="202" r="5" class="pop-near__ring" />
-        <circle cx="130" cy="202" r="5" class="pop-near" />
-        <text x="255" y="246" class="label label--red">{s.diag_edge_lbl}</text>
-        <text x="255" y="262" class="label label--small">{s.diag_nearest_lbl}</text>
-      </g>
+          <!-- global edge network; nearest node faces the customers -->
+          <g class="edge">
+            <circle cx="130" cy="250" r="48" class="globe" />
+            <ellipse cx="130" cy="250" rx="48" ry="16" class="globe__line" />
+            <ellipse cx="130" cy="250" rx="24" ry="48" class="globe__line globe__meridian" />
+            <ellipse cx="130" cy="250" rx="24" ry="48" class="globe__line globe__meridian globe__meridian--late" />
+            <circle cx="110" cy="232" r="3" class="pop" />
+            <circle cx="154" cy="226" r="3" class="pop" />
+            <circle cx="166" cy="258" r="3" class="pop" />
+            <circle cx="140" cy="284" r="3" class="pop" />
+            <circle cx="104" cy="276" r="3" class="pop" />
+            <circle cx="132" cy="252" r="3" class="pop" />
+            <circle cx="130" cy="202" r="5" class="pop-near__ring" />
+            <circle cx="130" cy="202" r="5" class="pop-near" />
+            <text x="255" y="246" class="label label--red">{s.diag_edge_lbl}</text>
+            <text x="255" y="262" class="label label--small">{s.diag_nearest_lbl}</text>
+          </g>
 
-      <!-- packets -->
-      <circle cx="130" cy="152" r="5" class="packet packet--slow packet--v" />
-      <circle cx="130" cy="152" r="5" class="packet packet--fast packet--v" />
-      <circle cx="130" cy="302" r="3.5" class="packet packet--sync packet--v" />
-      <text x="255" y="340" class="label label--small sync-label">{s.diag_refresh_lbl}</text>
-    </svg>
+          <!-- packets -->
+          <circle cx="130" cy="152" r="5" class="packet packet--slow packet--v" />
+          <circle cx="130" cy="152" r="5" class="packet packet--fast packet--v" />
+          <circle cx="130" cy="302" r="3.5" class="packet packet--sync packet--v" />
+          <text x="255" y="340" class="label label--small sync-label">{s.diag_refresh_lbl}</text>
+        </svg>
+        <p class="slide__benefit">{s.s1_benefit}</p>
+      </article>
+
+      {flowSlides.map((slide, si) => (
+        <article class="slide" id={`slide-${si + 1}`} role="tabpanel" aria-labelledby={`tab-${si + 1}`}>
+          <h3 class="slide__h">{slide.h}</h3>
+          <div class="captions" aria-hidden="true">
+            <p class="caption scene-a"><span class="caption__tag">{s.diag_caption_before_tag}</span> {slide.before}</p>
+            <p class="caption scene-b"><span class="caption__tag caption__tag--red">{s.diag_caption_after_tag}</span> {slide.after}</p>
+          </div>
+          {slide.flows.map((f) => (
+            <svg class={`diagram diagram--${f.orient === 'w' ? 'wide' : 'tall'}`} viewBox={f.viewBox} role="img" aria-label={f.a11y}>
+              <g class="node">
+                {f.dots.map(([x, y]) => <line x1={x} y1={y} x2={f.conv[0]} y2={f.conv[1]} />)}
+                {f.dots.map(([x, y]) => <circle cx={x} cy={y} r={f.dotR} class="dot" />)}
+                <text x={f.srcLbl[0]} y={f.srcLbl[1]} class="label">{f.srcText}</text>
+              </g>
+              <line x1={f.wire[0][0]} y1={f.wire[0][1]} x2={f.wire[1][0]} y2={f.wire[1][1]} class="wire" />
+              <rect x={f.box[0]} y={f.box[1]} width={f.box[2]} height={f.box[3]} class={`box ${f.strainCls}`} />
+              <text x={f.title[0]} y={f.title[1]} class="box__title">{f.titleText}</text>
+              <text x={f.sub[0]} y={f.sub[1]} class="label">{f.subText}</text>
+              <rect x={f.wait[0]} y={f.wait[1]} width={f.wait[2]} height={f.wait[3]} class={`wait ${f.waitCls}`} />
+
+              <g class="scene-a">
+                {f.metricBefore && <text x={f.metric[0]} y={f.metric[1]} class="timer timer--slow"><tspan class="approx">~</tspan>{f.metricBefore}</text>}
+                <text x={f.metricLbl[0]} y={f.metricLbl[1]} class="label label--small">{f.metricBeforeLbl}</text>
+              </g>
+              <g class="scene-b">
+                {f.metricAfter && <text x={f.metric[0]} y={f.metric[1]} class="timer timer--fast"><tspan class="approx">~</tspan>{f.metricAfter}</text>}
+                <text x={f.metricLbl[0]} y={f.metricLbl[1]} class="label label--small label--red">{f.metricAfterLbl}</text>
+              </g>
+
+              <g class="edge">
+                <circle cx={f.globe.c[0]} cy={f.globe.c[1]} r={f.globe.r} class="globe" />
+                <text x={f.edgeLbl[0]} y={f.edgeLbl[1]} class="label label--red">{s.diag_edge_lbl}</text>
+                <text x={f.roleLbl[0]} y={f.roleLbl[1]} class="label label--small">{f.roleText}</text>
+              </g>
+
+              {f.packets.map((p) => (
+                <circle cx={p.at[0]} cy={p.at[1]} r={p.r} class={`gen pk${p.hollow ? ' pk--hollow' : ''} ${p.cls}`} />
+              ))}
+              {f.texts.map((tx) => (
+                <text x={tx.at[0]} y={tx.at[1]} class={`gen ${tx.kind === 'num' ? 'timer' : tx.kind === 'x' ? 'x-mark' : 'label label--small'}${tx.final ? ' final' : ''} ${tx.cls}`}>{tx.text}</text>
+              ))}
+            </svg>
+          ))}
+          <p class="slide__benefit">{slide.benefit}</p>
+        </article>
+      ))}
+    </div>
   </div>
 </section>
 
@@ -135,12 +350,130 @@ const s = t(Astro.currentLocale);
     padding-bottom: 3rem;
   }
 
-  .diagram-wrap {
+
+
+  /* Slider */
+  .slider {
     position: relative;
     z-index: 2;
     width: 100%;
     max-width: 860px;
     margin-inline: auto;
+  }
+
+  /* One row; scrolls sideways when the labels don't fit (long Finnish words). */
+  .tabs {
+    display: flex;
+    justify-content: safe center;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tabs::-webkit-scrollbar { display: none; }
+
+  @media (max-width: 600px) {
+    .tabs {
+      gap: 1rem;
+      padding-inline: 1rem;
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+      mask-image: linear-gradient(to right, transparent, #000 1rem, #000 calc(100% - 1rem), transparent);
+    }
+    .tab { letter-spacing: 0.04em; }
+  }
+
+  .tab {
+    padding: 0.6rem 0;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--gray);
+    font-family: var(--font-body);
+    flex: none;
+    font-size: var(--text-meta);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, transform 0.1s ease-out;
+  }
+
+  .tab:hover { color: var(--white); }
+  .tab:active { transform: scale(0.97); }
+  .tab[aria-selected='true'] { color: var(--white); border-bottom-color: var(--red); }
+
+  .track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .track::-webkit-scrollbar { display: none; }
+
+  .slide {
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  .slide__h {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-heading);
+    font-size: clamp(1.25rem, 3.2vw, 1.9rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .slide__benefit {
+    margin: 1.25rem auto 0;
+    max-width: 32rem;
+    font-size: var(--text-body);
+    font-weight: 700;
+    text-align: center;
+  }
+
+  /* Only the visible slide animates; it restarts from "before" when shown (see script). */
+  .slide:not(.is-active) *,
+  .is-paused .slide * {
+    animation-play-state: paused !important;
+  }
+
+  /* Slides 2-3: generated packets, strain and wait bars */
+  .pk { opacity: 0; }
+  .pk--hollow { stroke: var(--white); stroke-width: 1.5; }
+  .gen { opacity: 0; }
+  .x-mark { font-family: var(--font-body); font-size: 16px; font-weight: 700; fill: var(--gray); }
+
+  .wait { fill: var(--gray); transform-box: fill-box; transform-origin: left; animation: 12s linear infinite; }
+  .diagram--tall .wait { transform-origin: left; }
+  .wait2 { animation-name: wait2; }
+  .wait3 { animation-name: wait3; }
+  .strain { animation: strain 12s linear infinite; }
+
+  @keyframes wait2 {
+    0%, 8% { transform: scaleX(0); opacity: 1; }
+    25%, 41% { transform: scaleX(1); opacity: 1; }
+    45%, 100% { transform: scaleX(1); opacity: 0; }
+  }
+
+  @keyframes wait3 {
+    0%, 12% { transform: scaleX(0); opacity: 1; }
+    36%, 41% { transform: scaleX(1); opacity: 1; }
+    45%, 100% { transform: scaleX(1); opacity: 0; }
+  }
+
+  @keyframes strain {
+    0%, 22% { stroke: var(--white); }
+    28%, 41% { stroke: var(--gray-dark); }
+    46%, 100% { stroke: var(--white); }
   }
 
   .captions {
@@ -371,5 +704,61 @@ const s = t(Astro.currentLocale);
     .scene-a, .wait-bar, .packet { opacity: 0; }
     .scene-b, .edge { opacity: 1; transform: none; }
     .origin { opacity: 0.35; }
+
+    .gen, .wait, .strain { animation: none !important; }
+    .gen { opacity: 0 !important; }
+    .gen.final { opacity: 1 !important; fill: var(--red); }
+    .wait { opacity: 0; }
   }
 </style>
+
+<script>
+  const root = document.getElementById('how');
+  const track = root?.querySelector<HTMLElement>('.track');
+  const slides = root ? [...root.querySelectorAll<HTMLElement>('.slide')] : [];
+  const tabs = root ? [...root.querySelectorAll<HTMLButtonElement>('.tab')] : [];
+
+  if (root && track && slides.length) {
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let current = 0;
+
+    const activate = (i: number) => {
+      if (i === current && slides[i].classList.contains('is-active')) return;
+      current = i;
+      slides.forEach((slide, j) => slide.classList.toggle('is-active', i === j));
+      tabs.forEach((tab, j) => {
+        tab.setAttribute('aria-selected', String(i === j));
+        tab.tabIndex = i === j ? 0 : -1;
+      });
+      // Start the shown slide from its "before" state.
+      slides[i].getAnimations({ subtree: true }).forEach((a) => (a.currentTime = 0));
+      tabs[i].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    };
+
+    const goTo = (i: number) => {
+      track.scrollTo({ left: slides[i].offsetLeft - slides[0].offsetLeft, behavior: reduced ? 'auto' : 'smooth' });
+      activate(i);
+    };
+
+    tabs.forEach((tab, i) => {
+      tab.addEventListener('click', () => goTo(i));
+      tab.addEventListener('keydown', (e) => {
+        const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!step) return;
+        const next = (i + step + tabs.length) % tabs.length;
+        goTo(next);
+        tabs[next].focus();
+      });
+    });
+
+    // Swiping updates the active slide.
+    const seen = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && activate(slides.indexOf(e.target as HTMLElement))),
+      { root: track, threshold: 0.6 },
+    );
+    slides.forEach((slide) => seen.observe(slide));
+
+    // Nothing animates while the section is off screen.
+    new IntersectionObserver(([e]) => root.classList.toggle('is-paused', !e.isIntersecting)).observe(root);
+  }
+</script>
