@@ -152,8 +152,8 @@ function build(kind: 2 | 3, orient: Orient): Flow {
 }
 
 const flowSlides = [
-  { tab: s.s2_tab, h: s.s2_h, before: s.s2_before, after: s.s2_after, benefit: s.s2_benefit, flows: [build(2, 'w'), build(2, 't')] },
-  { tab: s.s3_tab, h: s.s3_h, before: s.s3_before, after: s.s3_after, benefit: s.s3_benefit, flows: [build(3, 'w'), build(3, 't')] },
+  { tab: s.s2_tab, before: s.s2_before, after: s.s2_after, flows: [build(2, 'w'), build(2, 't')] },
+  { tab: s.s3_tab, before: s.s3_before, after: s.s3_after, flows: [build(3, 'w'), build(3, 't')] },
 ];
 const tabs = [s.s1_tab, ...flowSlides.map((f) => f.tab)];
 ---
@@ -171,7 +171,6 @@ const tabs = [s.s1_tab, ...flowSlides.map((f) => f.tab)];
 
     <div class="track">
       <article class="slide is-active" id="slide-0" role="tabpanel" aria-labelledby="tab-0">
-        <h3 class="slide__h">{s.s1_h}</h3>
         <div class="captions" aria-hidden="true">
           <p class="caption scene-a"><span class="caption__tag">{s.diag_caption_before_tag}</span> {s.diag_caption_before}</p>
           <p class="caption scene-b"><span class="caption__tag caption__tag--red">{s.diag_caption_after_tag}</span> {s.diag_caption_after}</p>
@@ -288,12 +287,10 @@ const tabs = [s.s1_tab, ...flowSlides.map((f) => f.tab)];
           <circle cx="130" cy="302" r="3.5" class="packet packet--sync packet--v" />
           <text x="255" y="340" class="label label--small sync-label">{s.diag_refresh_lbl}</text>
         </svg>
-        <p class="slide__benefit">{s.s1_benefit}</p>
       </article>
 
       {flowSlides.map((slide, si) => (
         <article class="slide" id={`slide-${si + 1}`} role="tabpanel" aria-labelledby={`tab-${si + 1}`}>
-          <h3 class="slide__h">{slide.h}</h3>
           <div class="captions" aria-hidden="true">
             <p class="caption scene-a"><span class="caption__tag">{s.diag_caption_before_tag}</span> {slide.before}</p>
             <p class="caption scene-b"><span class="caption__tag caption__tag--red">{s.diag_caption_after_tag}</span> {slide.after}</p>
@@ -334,7 +331,6 @@ const tabs = [s.s1_tab, ...flowSlides.map((f) => f.tab)];
               ))}
             </svg>
           ))}
-          <p class="slide__benefit">{slide.benefit}</p>
         </article>
       ))}
     </div>
@@ -421,24 +417,7 @@ const tabs = [s.s1_tab, ...flowSlides.map((f) => f.tab)];
     scroll-snap-align: start;
   }
 
-  .slide__h {
-    margin: 0 0 0.75rem;
-    font-family: var(--font-heading);
-    font-size: clamp(1.25rem, 3.2vw, 1.9rem);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-    text-align: center;
-    text-transform: uppercase;
-  }
 
-  .slide__benefit {
-    margin: 1.25rem auto 0;
-    max-width: 32rem;
-    font-size: var(--text-body);
-    font-weight: 700;
-    text-align: center;
-  }
 
   /* Only the visible slide animates; it restarts from "before" when shown (see script). */
   .slide:not(.is-active) *,
