@@ -1,8 +1,10 @@
 ---
 import '../../styles/global.css';
 import '../../styles/dashboard.css';
-import { RANGES, parseRange, tenants } from '../../lib/dashboard/mock';
+import { RANGES, parseRange } from '../../lib/dashboard/format';
+import { rpc } from '../../lib/dashboard/edge';
 import Sheet from './Sheet.astro';
+import Toast from './Toast.astro';
 
 interface Props {
   title: string;
@@ -15,15 +17,25 @@ interface Props {
 const { title, crumbs, ranged = false } = Astro.props;
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const range = parseRange(Astro.url.searchParams.get('range'));
+const list = await rpc((api) => api.listTenants());
+const tenants = list.ok ? list.data : [];
+const flash = Astro.locals.flash;
 
 const nav = [
   { label: 'Overview', items: [{ label: 'Overview', href: '/dashboard' }] },
-  { label: 'Tenants', items: tenants().map((t) => ({ label: t.slug, href: `/dashboard/tenants/${t.slug}` })) },
+  {
+    label: 'Tenants',
+    items: [
+      { label: 'All tenants', href: '/dashboard/tenants' },
+      ...tenants.map((t) => ({ label: t.slug, href: `/dashboard/tenants/${t.slug}` })),
+    ],
+  },
   {
     label: 'Cache',
     items: [
       { label: 'Rules', href: '/dashboard/rules' },
       { label: 'Purge', href: '/dashboard/purge' },
+      { label: 'Test request', href: '/dashboard/test' },
     ],
   },
   { label: 'Logs', items: [{ label: 'Purge log', href: '/dashboard/logs/purge' }] },
@@ -105,22 +117,31 @@ function rangeHref(r: string) {
     </div>
 
     <Sheet id="test-request" title="Test request">
-      <form class="form-grid" method="get" action="/dashboard/ui">
+      <form class="form-grid" method="post" action="/dashboard/test">
         <label class="f">
           <span class="f__label label">Tenant</span>
-          <select class="f__input" name="tenant">
-            {tenants().map((t) => <option value={t.slug}>{t.slug}</option>)}
+          <select class="f__input mono" name="slug">
+            {tenants.map((t) => <option value={t.slug}>{t.slug}</option>)}
           </select>
         </label>
         <label class="f">
-          <span class="f__label label">Path</span>
-          <input class="f__input mono" name="path" required pattern="/.*" placeholder="/api/v1/stock/SKU-1001" />
-          <span class="f__error mono">Path must start with /</span>
+          <span class="f__label label">Method</span>
+          <select class="f__input mono" name="method"><option>GET</option><option>POST</option></select>
         </label>
-        <p class="f__hint mono">Live requests arrive with the edge-cache worker (M3). This panel shows the shape only.</p>
-        <div><button class="btn" disabled>Send</button></div>
+        <label class="f">
+          <span class="f__label label">Path</span>
+          <input class="f__input mono" name="path" required pattern="/[^?#]*" placeholder="/products" />
+          <span class="f__error mono">Path must start with / and have no query</span>
+        </label>
+        <label class="f">
+          <span class="f__label label">Query</span>
+          <input class="f__input mono" name="query" placeholder="sku=SKU-1" />
+        </label>
+        <p class="f__hint mono">Runs through the edge worker with the tenant's live rules. Headers and body: <a class="link" href="/dashboard/test">full form</a>.</p>
+        <div><button class="btn">Send</button></div>
       </form>
     </Sheet>
     <slot name="after" />
+    {flash && <Toast kind={flash.kind} message={flash.message} dismissHref={Astro.url.pathname + Astro.url.search} />}
   </body>
 </html>

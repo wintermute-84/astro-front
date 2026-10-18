@@ -1,5 +1,5 @@
 ---
-import type { Kpi } from '../../lib/dashboard/mock';
+import type { Kpi } from '../../lib/dashboard/contract';
 interface Props { kpi: Kpi }
 const { kpi } = Astro.props;
 const arrow = { up: '↑', down: '↓', flat: '→' }[kpi.delta.dir];

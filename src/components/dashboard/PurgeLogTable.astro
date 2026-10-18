@@ -1,0 +1,31 @@
+---
+import type { PurgeLogEntry } from '../../lib/dashboard/contract';
+import { utc } from '../../lib/dashboard/format';
+interface Props { entries: PurgeLogEntry[] }
+const { entries } = Astro.props;
+---
+
+{
+  entries.length === 0 ? (
+    <div class="empty"><p>No purges yet.</p></div>
+  ) : (
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th scope="col">At</th><th scope="col">Tenant</th><th scope="col">Tags</th><th scope="col">Actor</th><th scope="col">Result</th></tr></thead>
+        <tbody>
+          {entries.map((e) => (
+            <tr>
+              <td class="mono">{utc(e.at)}</td>
+              <td class="mono">{e.tenant}</td>
+              <td class="mono">{e.tags.join(', ')}</td>
+              <td>{e.actor}</td>
+              <td>
+                {e.result === 'OK' ? <span class="mono status--ok">OK</span> : <><span class="mono status--err">ERR</span>{e.detail && <span class="dim"> {e.detail}</span>}</>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}

@@ -2,15 +2,27 @@
 import Layout from '../../components/dashboard/Layout.astro';
 import Kpi from '../../components/dashboard/Kpi.astro';
 import ChartCard from '../../components/dashboard/ChartCard.astro';
-import Badge from '../../components/dashboard/Badge.astro';
+import ErrorState from '../../components/dashboard/ErrorState.astro';
 import Chart, { type ChartSeries } from '../../components/dashboard/Chart.tsx';
-import { OUTCOMES, overview, parseRange, purgeLog, type Outcome } from '../../lib/dashboard/mock';
+import type { Outcome } from '../../lib/dashboard/contract';
+import { rpc } from '../../lib/dashboard/edge';
+import { OUTCOMES, parseRange, utc } from '../../lib/dashboard/format';
 
 export const prerender = false;
 
 const range = parseRange(Astro.url.searchParams.get('range'));
-const o = overview('all', range);
 const R = range.toUpperCase();
+const [tenants, recent] = await Promise.all([
+  rpc((api) => api.listTenants()),
+  rpc((api) => api.listPurgeLog(undefined, 5)),
+]);
+const slugs = tenants.ok ? tenants.data.map((t) => t.slug) : [];
+const asked = Astro.url.searchParams.get('tenant');
+const slug = asked && slugs.includes(asked) ? asked : slugs[0];
+const ov = slug ? await rpc((api) => api.overview(slug, range)) : null;
+const o = ov?.ok ? ov.data : null;
+const live = o?.available === true;
+const NOT_ENABLED = 'Metrics not enabled yet. Enable Analytics Engine (see edge-cache README).';
 
 const COLORS: Record<Outcome, string> = {
   HIT: '#ff2400',
@@ -19,102 +31,126 @@ const COLORS: Record<Outcome, string> = {
   'STALE-ERROR': '#9085e9',
   BYPASS: '#888',
 };
+const latency: ChartSeries[] = o
+  ? [
+      { label: 'EDGE P50', values: o.latency.edgeP50, color: COLORS.HIT },
+      { label: 'EDGE P95', values: o.latency.edgeP95, color: COLORS.HIT, dash: true },
+      { label: 'ORIGIN P50', values: o.latency.originP50, color: COLORS.MISS },
+      { label: 'ORIGIN P95', values: o.latency.originP95, color: COLORS.MISS, dash: true },
+    ]
+  : [];
+const hit: ChartSeries[] = o ? [{ label: 'HIT RATIO', values: o.hitRatio, color: COLORS.HIT }] : [];
+const outcomes: ChartSeries[] = o ? OUTCOMES.map((k) => ({ label: k, values: o.outcomes[k], color: COLORS[k], hatch: k === 'BYPASS' })) : [];
+// No fake numbers: without metrics the tiles keep their labels and say so.
+const kpis = (o?.kpis ?? []).map((k) => (live ? k : { ...k, value: '—', spark: undefined, delta: { dir: 'flat' as const, text: 'not enabled', good: true } }));
 
-const latency: ChartSeries[] = [
-  { label: 'EDGE P50', values: o.latency.edgeP50, color: COLORS.HIT },
-  { label: 'EDGE P95', values: o.latency.edgeP95, color: COLORS.HIT, dash: true },
-  { label: 'ORIGIN P50', values: o.latency.originP50, color: COLORS.MISS },
-  { label: 'ORIGIN P95', values: o.latency.originP95, color: COLORS.MISS, dash: true },
-];
-const hit: ChartSeries[] = [{ label: 'HIT RATIO', values: o.hitRatio, color: COLORS.HIT }];
-const outcomes: ChartSeries[] = OUTCOMES.map((k) => ({
-  label: k,
-  values: o.outcomes[k],
-  color: COLORS[k],
-  hatch: k === 'BYPASS',
-}));
-
-const median = (a: number[]) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
+const median = (a: number[]) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)] ?? 0;
 const ms = (a: number[]) => `${Math.round(median(a))} ms`;
-const when = (s: number) => new Date(s * 1000).toISOString().slice(5, 16).replace('T', ' ');
-const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
-const recent = purgeLog().slice(0, 5);
+const pct = (v: number | undefined) => `${((v ?? 0) * 100).toFixed(1)}%`;
+const when = (s: number) => utc(s).slice(5, 16);
+const tenantHref = (s: string) => `?tenant=${s}&range=${range}`;
 ---
 
-<Layout title="Overview" crumbs={[{ label: 'Overview' }, { label: `All tenants · ${R}` }]} ranged>
+<Layout title="Overview" crumbs={[{ label: 'Overview' }, { label: `${slug ?? 'no tenant'} · ${R}` }]} ranged>
   <div class="page-head">
     <div>
       <h1 class="page-title">OVERVIEW</h1>
-      <p class="page-sub">All tenants, last {R}. Mock data until the edge-cache worker reports to Analytics Engine.</p>
+      <p class="page-sub">Tenant <b class="mono">{slug ?? '—'}</b>, last {R}.</p>
     </div>
+    {
+      slugs.length > 1 && (
+        <nav class="tabs mono" aria-label="Tenant">
+          {slugs.map((s) => (
+            <a href={tenantHref(s)} aria-current={s === slug ? 'true' : undefined}>{s}</a>
+          ))}
+        </nav>
+      )
+    }
   </div>
 
-  <div class="grid">
-    {o.kpis.map((k) => <div class="span-3"><Kpi kpi={k} /></div>)}
-  </div>
+  {!tenants.ok && <ErrorState message={tenants.error} />}
+  {tenants.ok && !slug && (
+    <div class="card"><div class="empty"><p>No tenants yet. Add the first tenant.</p><a class="btn" href="/dashboard/tenants">Add tenant</a></div></div>
+  )}
+  {ov && !ov.ok && <ErrorState message={ov.error} />}
 
-  <div class="grid">
-    <ChartCard
-      class="span-8"
-      title="Latency · edge vs origin (log)"
-      stats={[
-        ['edge p50', ms(o.latency.edgeP50)],
-        ['origin p50', ms(o.latency.originP50)],
-      ]}
-    >
-      <Chart client:load kind="line" log t={o.t} series={latency} unit="ms" label={`p50 and p95 latency, edge vs origin, last ${R}`} />
-      <table class="table" slot="table">
-        <thead><tr><th>Time UTC</th>{latency.map((s) => <th class="r">{s.label}</th>)}</tr></thead>
-        <tbody>
-          {o.t.map((t, i) => <tr><td class="mono">{when(t)}</td>{latency.map((s) => <td class="r">{Math.round(s.values[i])}</td>)}</tr>)}
-        </tbody>
-      </table>
-    </ChartCard>
+  {
+    o && (
+      <>
+        {!live && (
+          <p class="card mono" role="status" style="margin:0 0 16px"><b class="status--warn">WARN</b> {NOT_ENABLED}</p>
+        )}
+        <div class="grid">
+          {kpis.map((k) => <div class="span-3"><Kpi kpi={k} /></div>)}
+        </div>
+        {live ? (
+          <>
+            <div class="grid">
+              <ChartCard class="span-8" title="Latency · edge vs origin (log)" stats={[['edge p50', ms(o.latency.edgeP50)], ['origin p50', ms(o.latency.originP50)]]}>
+                <Chart client:load kind="line" log t={o.t} series={latency} unit="ms" label={`p50 and p95 latency, edge vs origin, last ${R}`} />
+                <table class="table" slot="table">
+                  <thead><tr><th>Time UTC</th>{latency.map((s) => <th class="r">{s.label}</th>)}</tr></thead>
+                  <tbody>{o.t.map((t, i) => <tr><td class="mono">{when(t)}</td>{latency.map((s) => <td class="r">{Math.round(s.values[i])}</td>)}</tr>)}</tbody>
+                </table>
+              </ChartCard>
+              <ChartCard class="span-4" title="Hit ratio" stats={[['now', pct(o.hitRatio.at(-1))]]}>
+                <Chart client:load kind="line" t={o.t} series={hit} unit="%" label={`Hit ratio, last ${R}`} />
+                <table class="table" slot="table">
+                  <thead><tr><th>Time UTC</th><th class="r">Hit ratio</th></tr></thead>
+                  <tbody>{o.t.map((t, i) => <tr><td class="mono">{when(t)}</td><td class="r">{pct(o.hitRatio[i])}</td></tr>)}</tbody>
+                </table>
+              </ChartCard>
+            </div>
+            <div class="grid">
+              <ChartCard class="span-12" title="Outcomes per bucket">
+                <Chart client:visible kind="stacked" t={o.t} series={outcomes} unit="" label={`Requests per cache outcome, last ${R}`} />
+                <table class="table" slot="table">
+                  <thead><tr><th>Time UTC</th>{OUTCOMES.map((k) => <th class="r">{k}</th>)}</tr></thead>
+                  <tbody>{o.t.map((t, i) => <tr><td class="mono">{when(t)}</td>{OUTCOMES.map((k) => <td class="r">{o.outcomes[k][i].toLocaleString('en')}</td>)}</tr>)}</tbody>
+                </table>
+              </ChartCard>
+            </div>
+          </>
+        ) : (
+          <div class="grid">
+            {['Latency · edge vs origin', 'Hit ratio', 'Outcomes per bucket'].map((title, i) => (
+              <section class:list={['card', ['span-8', 'span-4', 'span-12'][i]]}>
+                <div class="card__head"><h2 class="label card__title">{title}</h2></div>
+                <div class="empty"><p>{NOT_ENABLED}</p></div>
+              </section>
+            ))}
+          </div>
+        )}
+      </>
+    )
+  }
 
-    <ChartCard class="span-4" title="Hit ratio" stats={[['now', pct(o.hitRatio.at(-1)!)]]}>
-      <Chart client:load kind="line" t={o.t} series={hit} unit="%" label={`Hit ratio, last ${R}`} />
-      <table class="table" slot="table">
-        <thead><tr><th>Time UTC</th><th class="r">Hit ratio</th></tr></thead>
-        <tbody>{o.t.map((t, i) => <tr><td class="mono">{when(t)}</td><td class="r">{pct(o.hitRatio[i])}</td></tr>)}</tbody>
-      </table>
-    </ChartCard>
-  </div>
-
-  <div class="grid">
-    <ChartCard class="span-8" title="Outcomes per bucket">
-      <Chart client:visible kind="stacked" t={o.t} series={outcomes} unit="" label={`Requests per cache outcome, last ${R}`} />
-      <table class="table" slot="table">
-        <thead><tr><th>Time UTC</th>{OUTCOMES.map((k) => <th class="r">{k}</th>)}</tr></thead>
-        <tbody>
-          {o.t.map((t, i) => <tr><td class="mono">{when(t)}</td>{OUTCOMES.map((k) => <td class="r">{o.outcomes[k][i].toLocaleString('en')}</td>)}</tr>)}
-        </tbody>
-      </table>
-    </ChartCard>
-
-    <section class="card span-4">
-      <div class="card__head">
-        <h2 class="label card__title">Recent purges</h2>
-        <a class="mono card__stats" href="/dashboard/logs/purge">ALL →</a>
-      </div>
-      <div class="table-wrap">
-        <table class="table">
-          <thead><tr><th>At UTC</th><th>Tenant</th><th>Result</th></tr></thead>
-          <tbody>
-            {
-              recent.map((p) => (
+  <section class="card">
+    <div class="card__head">
+      <h2 class="label card__title">Recent purges</h2>
+      <a class="mono card__stats" href="/dashboard/logs/purge">ALL →</a>
+    </div>
+    {!recent.ok && <p class="mono"><b class="status--err">ERR</b> {recent.error}</p>}
+    {recent.ok && recent.data.length === 0 && <div class="empty"><p>No purges yet.</p></div>}
+    {
+      recent.ok && recent.data.length > 0 && (
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th>At UTC</th><th>Tenant</th><th>Tags</th><th>Actor</th><th>Result</th></tr></thead>
+            <tbody>
+              {recent.data.map((p) => (
                 <tr>
                   <td class="mono">{when(p.at)}</td>
                   <td class="mono">{p.tenant}</td>
+                  <td class="mono">{p.tags.join(', ')}</td>
+                  <td>{p.actor}</td>
                   <td class={`mono status--${p.result === 'OK' ? 'ok' : 'err'}`}>{p.result}</td>
                 </tr>
-              ))
-            }
-          </tbody>
-        </table>
-      </div>
-      <p class="mono" style="margin:16px 0 0;display:flex;gap:12px;flex-wrap:wrap">
-        {OUTCOMES.map((k) => <Badge outcome={k} />)}
-      </p>
-    </section>
-  </div>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+  </section>
 </Layout>

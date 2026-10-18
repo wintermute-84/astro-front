@@ -1,0 +1,12 @@
+---
+// Edge-cache unreachable or RPC failed: the page still renders, this says why.
+interface Props { message: string; title?: string }
+const { message, title = 'Could not load from the edge-cache worker.' } = Astro.props;
+---
+
+<div class="card" role="alert">
+  <div class="empty">
+    <p><b class="status--err mono">ERR</b> {title}</p>
+    <p class="mono dim">{message}</p>
+  </div>
+</div>

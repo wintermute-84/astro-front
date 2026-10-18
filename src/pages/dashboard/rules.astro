@@ -1,0 +1,53 @@
+---
+import Layout from '../../components/dashboard/Layout.astro';
+import ErrorState from '../../components/dashboard/ErrorState.astro';
+import RulesTable from '../../components/dashboard/RulesTable.astro';
+import { rpc } from '../../lib/dashboard/edge';
+
+export const prerender = false;
+
+const status = Astro.url.searchParams.get('status');
+const filter = status === 'enabled' || status === 'off' ? status : 'all';
+const q = Astro.url.searchParams.get('q')?.trim().toLowerCase() ?? '';
+// ponytail: one getTenant per tenant; add a listRules RPC when tenants reach dozens.
+const all = await rpc(async (api) => (await Promise.all((await api.listTenants()).map((t) => api.getTenant(t.slug)))).flatMap((d) => d.rules));
+const rules = all.ok ? all.data : [];
+const shown = rules
+  .filter((r) => filter === 'all' || (filter === 'enabled') === r.enabled)
+  .filter((r) => !q || r.pathPattern.toLowerCase().includes(q) || r.tenant.includes(q) || r.tags.some((t) => t.includes(q)));
+const href = (s: string) => `?status=${s}${q ? `&q=${encodeURIComponent(q)}` : ''}`;
+---
+
+<Layout title="Rules" crumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Rules' }]}>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">RULES</h1>
+      <p class="page-sub">All tenants. Add or edit rules on the tenant page.</p>
+    </div>
+  </div>
+  {!all.ok && <ErrorState message={all.error} />}
+  {
+    all.ok && (
+      <div class="card">
+        <div class="toolbar">
+          <nav class="tabs mono" aria-label="Rule status">
+            <a href={href('all')} aria-current={filter === 'all' ? 'true' : undefined}>ALL<span class="count">{rules.length}</span></a>
+            <a href={href('enabled')} aria-current={filter === 'enabled' ? 'true' : undefined}>ON<span class="count">{rules.filter((r) => r.enabled).length}</span></a>
+            <a href={href('off')} aria-current={filter === 'off' ? 'true' : undefined}>OFF<span class="count">{rules.filter((r) => !r.enabled).length}</span></a>
+          </nav>
+          <div class="toolbar__right">
+            <form role="search" method="get">
+              <input type="hidden" name="status" value={filter} />
+              <input class="search" type="search" name="q" placeholder="Search path, tenant or tag" value={q} aria-label="Search rules" />
+            </form>
+          </div>
+        </div>
+        {shown.length === 0 ? (
+          <div class="empty"><p>{rules.length ? 'No rules match.' : 'No rules yet. Add one on a tenant page.'}</p><a class="btn" href="/dashboard/tenants">Tenants</a></div>
+        ) : (
+          <RulesTable rules={shown} showTenant />
+        )}
+      </div>
+    )
+  }
+</Layout>

@@ -15,6 +15,7 @@
 	"ratelimits": [
 		{ "name": "DASHBOARD_AUTH_LIMITER", "namespace_id": "2001", "simple": { "limit": 3, "period": 60 } }
 	],
+	"services": [{ "binding": "EDGE_CACHE", "service": "edge-cache", "entrypoint": "EdgeCacheRPC" }],
 	"env": {
 		"dev": {
 			"name": "astro-front-dev",

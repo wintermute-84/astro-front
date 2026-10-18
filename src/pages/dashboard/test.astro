@@ -1,0 +1,78 @@
+---
+import Layout from '../../components/dashboard/Layout.astro';
+import Field from '../../components/dashboard/Field.astro';
+import Badge from '../../components/dashboard/Badge.astro';
+import ErrorState from '../../components/dashboard/ErrorState.astro';
+import { rpc, type Result } from '../../lib/dashboard/edge';
+import { testRequestFromForm } from '../../lib/dashboard/forms';
+import type { TestRequestResult } from '../../lib/dashboard/contract';
+
+export const prerender = false;
+
+// GET prefills from the query string (TEST links in the rules table); POST runs the request.
+const fd = Astro.request.method === 'POST' ? await Astro.request.formData() : new URLSearchParams(Astro.url.search);
+const v = (k: string) => String(fd.get(k) ?? '');
+let result: Result<TestRequestResult> | null = null;
+if (Astro.request.method === 'POST') {
+  const input = testRequestFromForm(fd as FormData);
+  result = await rpc((api) => api.testRequest(input));
+}
+const tenants = await rpc((api) => api.listTenants());
+const SHOW = ['x-edge-cache', 'age', 'content-type', 'cache-control', 'access-control-allow-origin'];
+---
+
+<Layout title="Test request" crumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Test request' }]}>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">TEST REQUEST</h1>
+      <p class="page-sub">Sends one request through the edge worker with the tenant's live rules. Send twice to see MISS then HIT.</p>
+    </div>
+  </div>
+  {!tenants.ok && <ErrorState message={tenants.error} />}
+  <div class="grid">
+    <form class="card form-grid span-6" method="post">
+      <div class="f">
+        <label class="f__label label" for="f-slug">Tenant</label>
+        <select class="f__input mono" id="f-slug" name="slug">
+          {tenants.ok && tenants.data.map((t) => <option selected={t.slug === v('slug')}>{t.slug}</option>)}
+        </select>
+      </div>
+      <div class="f">
+        <label class="f__label label" for="f-method">Method</label>
+        <select class="f__input mono" id="f-method" name="method">
+          {['GET', 'POST'].map((m) => <option selected={m === v('method')}>{m}</option>)}
+        </select>
+      </div>
+      <Field label="Path" name="path" value={v('path')} required pattern="/[^?#]*" placeholder="/products" />
+      <Field label="Query" name="query" value={v('query')} placeholder="sku=SKU-1" />
+      <Field label="Headers" name="headers" value={v('headers')} multiline placeholder="x-customer-group: b2b" hint="One name: value per line." />
+      <Field label="Body (POST)" name="body" value={v('body')} multiline placeholder='{"skus":["A"]}' />
+      <div><button class="btn">Send</button></div>
+    </form>
+
+    <section class="card span-6" aria-live="polite">
+      <div class="card__head"><h2 class="label card__title">Result</h2></div>
+      {!result && <div class="empty"><p>Send a request to see the cache key, outcome and timings.</p></div>}
+      {result && !result.ok && <p class="f__error mono" data-server role="alert">{result.error}</p>}
+      {
+        result?.ok && (
+          <dl class="kv mono">
+            <dt>Outcome</dt><dd><Badge outcome={result.data.outcome} /></dd>
+            <dt>Status</dt><dd>{result.data.status}</dd>
+            <dt>Total</dt><dd>{result.data.totalMs} ms</dd>
+            <dt>Origin</dt><dd>{result.data.originMs ? `${result.data.originMs} ms` : 'not called'}</dd>
+            <dt>Key</dt><dd class="kv__key">{result.data.key ?? '— (bypassed before a key was built)'}</dd>
+            {SHOW.filter((h) => result.data.headers[h]).map((h) => <><dt>{h}</dt><dd>{result.data.headers[h]}</dd></>)}
+          </dl>
+        )
+      }
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 10px 20px; margin: 0; }
+  .kv dt { color: var(--text-3); text-transform: uppercase; }
+  .kv dd { margin: 0; color: var(--text-1); }
+  .kv__key { overflow-wrap: anywhere; }
+</style>

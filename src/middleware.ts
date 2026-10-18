@@ -3,6 +3,7 @@ import { env } from 'cloudflare:workers';
 import { createRemoteJWKSet } from 'jose';
 import { authorize, type AuthEnv } from './lib/dashboard/auth';
 import { LOCKOUT_S, isLockedOut, recordFailure } from './lib/dashboard/ratelimit';
+import { takeFlash } from './lib/dashboard/edge';
 
 const PRIVATE = { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' };
 
@@ -44,6 +45,8 @@ export const onRequest = defineMiddleware(async (ctx, next) => {
     });
   }
   ctx.locals.user = auth.user;
+  // Read the one-shot toast here: by the time the layout renders, headers may be sent.
+  ctx.locals.flash = takeFlash(ctx.cookies);
 
   // Copy: some responses (e.g. Response.redirect) have immutable headers.
   const upstream = await next();

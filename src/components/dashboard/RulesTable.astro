@@ -1,0 +1,48 @@
+---
+import { maxStaleness, type Rule } from '../../lib/dashboard/contract';
+import { formatDuration } from '../../lib/dashboard/format';
+interface Props { rules: Rule[]; showTenant?: boolean }
+const { rules, showTenant = false } = Astro.props;
+const edit = (r: Rule) => `/dashboard/tenants/${r.tenant}/rules/${r.id}`;
+const test = (r: Rule) => `/dashboard/test?slug=${r.tenant}&method=${r.method}&path=${encodeURIComponent(r.pathPattern.replaceAll('*', 'x'))}`;
+---
+
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        {showTenant && <th scope="col">Tenant</th>}
+        <th scope="col">Method</th>
+        <th scope="col">Path</th>
+        <th scope="col" class="r">TTL</th>
+        <th scope="col" class="r">SWR</th>
+        <th scope="col" class="r">Stale-if-error</th>
+        <th scope="col" class="r">Max staleness</th>
+        <th scope="col">Vary</th>
+        <th scope="col">Tags</th>
+        <th scope="col">Status</th>
+        <th scope="col"><span class="sr-only">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {rules.map((r) => {
+        const ms = maxStaleness(r);
+        return (
+          <tr>
+            {showTenant && <td class="mono"><a class="link" href={`/dashboard/tenants/${r.tenant}`}>{r.tenant}</a></td>}
+            <td class="mono">{r.method}{r.postRead && <span class="dim"> read</span>}</td>
+            <td class="mono">{r.pathPattern}</td>
+            <td class="r">{formatDuration(r.ttlS)}</td>
+            <td class="r">{formatDuration(r.swrS)}</td>
+            <td class="r">{formatDuration(r.staleIfErrorS)}</td>
+            <td class="r">{formatDuration(ms.normal)}<span class="dim mono"> / {formatDuration(ms.outage)} outage</span></td>
+            <td class="mono">{r.vary.length ? r.vary.join(', ') : '—'}</td>
+            <td class="mono">{r.tags.length ? r.tags.join(', ') : '—'}</td>
+            <td>{r.enabled ? <span class="mono status--ok">ON</span> : <span class="mono status--warn">OFF</span>}</td>
+            <td class="row-actions"><a href={edit(r)}>EDIT</a><a href={test(r)}>TEST</a></td>
+          </tr>
+        );
+      })}
+    </tbody>
+  </table>
+</div>

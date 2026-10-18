@@ -1,0 +1,62 @@
+---
+import Layout from '../../components/dashboard/Layout.astro';
+import ErrorState from '../../components/dashboard/ErrorState.astro';
+import ConfirmDialog from '../../components/dashboard/ConfirmDialog.astro';
+import { purgeAction, rpc, setFlash } from '../../lib/dashboard/edge';
+
+export const prerender = false;
+
+if (Astro.request.method === 'POST') {
+  const fd = await Astro.request.formData();
+  const slug = String(fd.get('slug') ?? '');
+  setFlash(Astro.cookies, await purgeAction(fd, slug, Astro.locals.user?.email ?? 'unknown'));
+  return Astro.redirect('/dashboard/purge', 303);
+}
+
+const tenants = await rpc((api) => api.listTenants());
+---
+
+<Layout title="Purge" crumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Purge' }]}>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">PURGE</h1>
+      <p class="page-sub">Purge by tag, scoped to one tenant. Every purge is logged.</p>
+    </div>
+  </div>
+  {!tenants.ok && <ErrorState message={tenants.error} />}
+  {
+    tenants.ok && (
+      <div class="card">
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th scope="col">Tenant</th><th scope="col" class="r">Rules</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+            <tbody>
+              {tenants.data.map((t) => (
+                <tr>
+                  <td class="mono"><a class="link" href={`/dashboard/tenants/${t.slug}`}>{t.slug}</a></td>
+                  <td class="r">{t.rules}</td>
+                  <td class="row-actions"><button type="button" commandfor={`purge-${t.slug}`} command="show-modal">PURGE…</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )
+  }
+  {
+    tenants.ok &&
+      tenants.data.map((t) => (
+        <ConfirmDialog id={`purge-${t.slug}`} title={`Purge ${t.slug}`} confirmValue={t.slug} action="/dashboard/purge" submitLabel="Purge">
+          <p>Removes cached responses for <b>{t.slug}</b> in all data centers. The next requests go to the origin.</p>
+          <Fragment slot="fields">
+            <input type="hidden" name="slug" value={t.slug} />
+            <label class="f">
+              <span class="f__label label">Tags (empty = everything for {t.slug})</span>
+              <input class="f__input mono" name="tags" autocomplete="off" placeholder="*" />
+            </label>
+          </Fragment>
+        </ConfirmDialog>
+      ))
+  }
+</Layout>

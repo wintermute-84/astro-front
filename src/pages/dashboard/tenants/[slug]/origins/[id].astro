@@ -1,0 +1,60 @@
+---
+import Layout from '../../../../../components/dashboard/Layout.astro';
+import Field from '../../../../../components/dashboard/Field.astro';
+import ErrorState from '../../../../../components/dashboard/ErrorState.astro';
+import { rpc, setFlash } from '../../../../../lib/dashboard/edge';
+import { fieldOf, originFromForm } from '../../../../../lib/dashboard/forms';
+import type { OriginInput } from '../../../../../lib/dashboard/contract';
+
+export const prerender = false;
+
+const slug = Astro.params.slug!;
+const id = Astro.params.id!;
+const isNew = id === 'new';
+const back = `/dashboard/tenants/${slug}`;
+const FIELDS = ['baseUrl', 'timeoutMs', 'authHeaderName', 'secretRef'] as const;
+let input: OriginInput | null = null;
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const fd = await Astro.request.formData();
+  fd.set('id', isNew ? '' : id);
+  input = originFromForm(fd, slug);
+  const r = await rpc((api) => api.upsertOrigin(input!));
+  if (r.ok) {
+    setFlash(Astro.cookies, { kind: 'ok', message: `${isNew ? 'Added' : 'Saved'} origin ${r.data.id}.` });
+    return Astro.redirect(back, 303);
+  }
+  error = r.error;
+}
+
+const detail = await rpc((api) => api.getTenant(slug));
+const existing = detail.ok ? detail.data.origins.find((o) => o.id === id) : undefined;
+const missing = detail.ok && !isNew && !existing;
+if (missing || (!detail.ok && /unknown tenant/.test(detail.error))) Astro.response.status = 404;
+const o = input ?? existing;
+const at = error ? fieldOf(error, FIELDS) : null;
+const err = (f: string) => (at === f ? error : null);
+const title = isNew ? 'New origin' : id;
+---
+
+<Layout title={title} crumbs={[{ label: 'Tenants', href: '/dashboard/tenants' }, { label: slug, href: back }, { label: isNew ? 'New origin' : `Origin ${id}` }]}>
+  <div class="page-head"><h1 class="page-title">{isNew ? 'NEW ORIGIN' : 'EDIT ORIGIN'}</h1></div>
+  {!detail.ok && <ErrorState message={detail.error} />}
+  {missing && <ErrorState title="No such origin." message={`Origin "${id}" doesn't belong to ${slug}.`} />}
+  {
+    detail.ok && !missing && (
+      <form class="card form-grid" method="post" style="max-width:640px">
+        {error && !at && <p class="f__error mono" data-server role="alert">{error}</p>}
+        <Field label="Base URL" name="baseUrl" type="url" value={o?.baseUrl} error={err('baseUrl')} required placeholder="https://erp.example.com/api" hint="https only. Rule paths are appended to it." />
+        <Field label="Timeout ms" name="timeoutMs" type="number" min="100" max="30000" value={o?.timeoutMs ?? 5000} error={err('timeoutMs')} required />
+        <Field label="Auth header name" name="authHeaderName" value={o?.authHeaderName} error={err('authHeaderName')} placeholder="x-api-key" hint="Optional. Set together with the secret name." />
+        <Field label="Secret name" name="secretRef" value={o?.secretRef} error={err('secretRef')} placeholder="ORIGIN_SECRET_ACME" pattern="ORIGIN_SECRET_[A-Z0-9_]+" hint="Name of an edge-cache worker secret, never the value." />
+        <div style="display:flex;gap:12px">
+          <button class="btn">{isNew ? 'Add origin' : 'Save origin'}</button>
+          <a class="btn btn--outline" href={back}>Cancel</a>
+        </div>
+      </form>
+    )
+  }
+</Layout>

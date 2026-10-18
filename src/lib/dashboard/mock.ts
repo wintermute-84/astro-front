@@ -1,13 +1,9 @@
+// Mock data for /dashboard/ui only. Live pages use the edge-cache RPC (edge.ts).
+import { OUTCOMES, RANGES, formatDuration, parseRange } from './format.ts';
+export { OUTCOMES, RANGES, formatDuration, parseRange };
+
 export type Range = '24h' | '7d' | '30d';
-export const RANGES: Range[] = ['24h', '7d', '30d'];
-
-export function parseRange(v: string | null | undefined): Range {
-  if (v === '7d' || v === '30d' || v === '24h') return v;
-  return '24h';
-}
-
 export type Outcome = 'HIT' | 'MISS' | 'STALE' | 'STALE-ERROR' | 'BYPASS';
-export const OUTCOMES: Outcome[] = ['HIT', 'MISS', 'STALE', 'STALE-ERROR', 'BYPASS'];
 
 export interface Tenant {
   slug: string;
@@ -523,34 +519,6 @@ const PURGE_LOG_ALL: PurgeLogEntry[] = [
 export function purgeLog(tenant?: string): PurgeLogEntry[] {
   if (!tenant) return [...PURGE_LOG_ALL];
   return PURGE_LOG_ALL.filter((e) => e.tenant === tenant);
-}
-
-export function formatDuration(s: number): string {
-  if (s <= 0) return '0 s';
-  const day = 86400;
-  const hour = 3600;
-  const minute = 60;
-
-  const days = Math.floor(s / day);
-  let rem = s % day;
-  const hours = Math.floor(rem / hour);
-  rem %= hour;
-  const minutes = Math.floor(rem / minute);
-  rem %= minute;
-  const seconds = rem;
-
-  if (days > 0) {
-    const parts: string[] = [`${days} d`];
-    if (hours > 0) parts.push(`${hours} h`);
-    return parts.join(' ');
-  }
-  if (hours > 0) {
-    const parts: string[] = [`${hours} h`];
-    if (minutes > 0) parts.push(`${minutes} min`);
-    return parts.join(' ');
-  }
-  if (minutes > 0) return `${minutes} min`;
-  return `${seconds} s`;
 }
 
 export function maxStaleness(r: Rule): { normal: number; outage: number } {

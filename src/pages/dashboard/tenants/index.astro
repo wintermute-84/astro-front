@@ -1,0 +1,82 @@
+---
+import Layout from '../../../components/dashboard/Layout.astro';
+import Field from '../../../components/dashboard/Field.astro';
+import ErrorState from '../../../components/dashboard/ErrorState.astro';
+import { rpc, setFlash } from '../../../lib/dashboard/edge';
+import { fieldOf, tenantFromForm } from '../../../lib/dashboard/forms';
+import type { TenantInput } from '../../../lib/dashboard/contract';
+
+export const prerender = false;
+
+const FIELDS = ['slug', 'name', 'corsOrigins'] as const;
+let input: TenantInput | null = null;
+let error: string | null = null;
+
+const tenants = await rpc((api) => api.listTenants());
+
+if (Astro.request.method === 'POST') {
+  input = tenantFromForm(await Astro.request.formData());
+  // upsertTenant overwrites by slug; the create form must not.
+  if (tenants.ok && tenants.data.some((t) => t.slug === input!.slug)) error = `slug "${input.slug}" already exists`;
+  else {
+    const r = await rpc((api) => api.upsertTenant(input!));
+    if (r.ok) {
+      setFlash(Astro.cookies, { kind: 'ok', message: `Created tenant ${r.data.tenant.slug}.` });
+      return Astro.redirect(`/dashboard/tenants/${r.data.tenant.slug}`, 303);
+    }
+    error = r.error;
+  }
+}
+const at = error ? fieldOf(error, FIELDS) : null;
+const err = (f: string) => (at === f ? error : null);
+---
+
+<Layout title="Tenants" crumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Tenants' }]}>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">TENANTS</h1>
+      <p class="page-sub">Each tenant is served at <span class="mono">edge.3dreamlab.com/t/&lt;slug&gt;/…</span></p>
+    </div>
+  </div>
+
+  {!tenants.ok && <ErrorState message={tenants.error} />}
+  {
+    tenants.ok && (
+      <section class="card section-block">
+        {tenants.data.length === 0 ? (
+          <div class="empty"><p>No tenants yet. Add the first tenant below.</p></div>
+        ) : (
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th scope="col">Slug</th><th scope="col">Name</th><th scope="col" class="r">Origins</th><th scope="col" class="r">Rules</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+              <tbody>
+                {tenants.data.map((t) => (
+                  <tr>
+                    <td class="mono"><a class="link" href={`/dashboard/tenants/${t.slug}`}>{t.slug}</a></td>
+                    <td>{t.name}</td>
+                    <td class="r">{t.origins}</td>
+                    <td class="r">{t.rules}</td>
+                    <td>{t.enabled ? <span class="mono status--ok">ON</span> : <span class="mono status--warn">OFF</span>}</td>
+                    <td class="row-actions"><a href={`/dashboard/tenants/${t.slug}`}>OPEN</a><a href={`/dashboard?tenant=${t.slug}`}>METRICS</a></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    )
+  }
+
+  <section class="section-block">
+    <h2 class="label" style="margin:0 0 12px">Add tenant</h2>
+    <form class="card form-grid" method="post" style="max-width:640px">
+      {error && !at && <p class="f__error mono" data-server role="alert">{error}</p>}
+      <Field label="Slug" name="slug" value={input?.slug} error={err('slug')} required pattern="[a-z0-9](?:[a-z0-9\-]{0,30}[a-z0-9])?" maxlength="32" hint="a-z, 0-9, '-'. Part of the URL; can't be renamed." />
+      <Field label="Name" name="name" value={input?.name} error={err('name')} required maxlength="80" />
+      <Field label="CORS origins" name="corsOrigins" value={input?.corsOrigins?.join('\n')} error={err('corsOrigins')} multiline placeholder="https://shop.example.com" hint="One per line, scheme://host[:port]. Empty = no browser access." />
+      <label class="f__row"><input type="checkbox" role="switch" class="switch" name="enabled" checked={input ? input.enabled : true} /><span>Enabled</span></label>
+      <div><button class="btn">Create tenant</button></div>
+    </form>
+  </section>
+</Layout>

@@ -1,0 +1,146 @@
+---
+import Layout from '../../../../components/dashboard/Layout.astro';
+import Field from '../../../../components/dashboard/Field.astro';
+import ErrorState from '../../../../components/dashboard/ErrorState.astro';
+import ConfirmDialog from '../../../../components/dashboard/ConfirmDialog.astro';
+import RulesTable from '../../../../components/dashboard/RulesTable.astro';
+import PurgeLogTable from '../../../../components/dashboard/PurgeLogTable.astro';
+import { purgeAction, rpc, setFlash } from '../../../../lib/dashboard/edge';
+import { fieldOf, tenantFromForm } from '../../../../lib/dashboard/forms';
+import type { TenantInput } from '../../../../lib/dashboard/contract';
+
+export const prerender = false;
+
+const slug = Astro.params.slug!;
+const here = `/dashboard/tenants/${slug}`;
+const FIELDS = ['name', 'corsOrigins'] as const;
+let input: TenantInput | null = null;
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const fd = await Astro.request.formData();
+  if (fd.get('_action') === 'purge') {
+    setFlash(Astro.cookies, await purgeAction(fd, slug, Astro.locals.user?.email ?? 'unknown'));
+    return Astro.redirect(here, 303);
+  }
+  input = { ...tenantFromForm(fd), slug };
+  const r = await rpc((api) => api.upsertTenant(input!));
+  if (r.ok) {
+    setFlash(Astro.cookies, { kind: 'ok', message: `Saved tenant ${slug}.` });
+    return Astro.redirect(here, 303);
+  }
+  error = r.error;
+}
+
+const [detail, log] = await Promise.all([rpc((api) => api.getTenant(slug)), rpc((api) => api.listPurgeLog(slug, 20))]);
+if (!detail.ok && /unknown tenant|slug must/.test(detail.error)) Astro.response.status = 404;
+const d = detail.ok ? detail.data : null;
+const t = input ?? d?.tenant;
+const at = error ? fieldOf(error, FIELDS) : null;
+const err = (f: string) => (at === f ? error : null);
+const tagOptions = d ? [...new Set(d.rules.flatMap((r) => r.tags))] : [];
+---
+
+<Layout title={slug} crumbs={[{ label: 'Tenants', href: '/dashboard/tenants' }, { label: slug }]}>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">{slug.toUpperCase()}</h1>
+      <p class="page-sub">{d ? `${d.tenant.name} · served at edge.3dreamlab.com/t/${slug}/…` : ' '}</p>
+    </div>
+    {
+      d && (
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a class="btn btn--outline" href={`/dashboard?tenant=${slug}`}>Metrics</a>
+          <button type="button" class="btn btn--danger" commandfor="purge-confirm" command="show-modal">Purge {slug}…</button>
+        </div>
+      )
+    }
+  </div>
+
+  {!detail.ok && <ErrorState message={detail.error} />}
+
+  {
+    d && (
+      <>
+        <section class="section-block">
+          <div class="card__head">
+            <h2 class="label card__title">Origins</h2>
+            <a class="mono card__stats" href={`${here}/origins/new`}>+ ADD ORIGIN</a>
+          </div>
+          <div class="card">
+            {d.origins.length === 0 ? (
+              <div class="empty"><p>No origins yet. Rules need one.</p><a class="btn" href={`${here}/origins/new`}>Add origin</a></div>
+            ) : (
+              <div class="table-wrap">
+                <table class="table">
+                  <thead><tr><th scope="col">ID</th><th scope="col">Base URL</th><th scope="col" class="r">Timeout</th><th scope="col">Auth header</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+                  <tbody>
+                    {d.origins.map((o) => (
+                      <tr>
+                        <td class="mono">{o.id}</td>
+                        <td class="mono">{o.baseUrl}</td>
+                        <td class="r">{o.timeoutMs} ms</td>
+                        <td class="mono">{o.authHeaderName ? `${o.authHeaderName} ← ${o.secretRef}` : '—'}</td>
+                        <td class="row-actions"><a href={`${here}/origins/${o.id}`}>EDIT</a></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section class="section-block">
+          <div class="card__head">
+            <h2 class="label card__title">Rules</h2>
+            {d.origins.length > 0 && <a class="mono card__stats" href={`${here}/rules/new`}>+ ADD RULE</a>}
+          </div>
+          <div class="card">
+            {d.rules.length === 0 ? (
+              <div class="empty">
+                <p>No rules yet. Everything bypasses the cache.</p>
+                {d.origins.length > 0 && <a class="btn" href={`${here}/rules/new`}>Add the first rule</a>}
+              </div>
+            ) : (
+              <RulesTable rules={d.rules} />
+            )}
+          </div>
+        </section>
+
+        <section class="section-block">
+          <div class="card__head">
+            <h2 class="label card__title">Purge log</h2>
+            <a class="mono card__stats" href="/dashboard/logs/purge">ALL →</a>
+          </div>
+          <div class="card">
+            {log.ok ? <PurgeLogTable entries={log.data} /> : <p class="mono"><b class="status--err">ERR</b> {log.error}</p>}
+          </div>
+        </section>
+
+        <section class="section-block">
+          <h2 class="label" style="margin:0 0 12px">Settings</h2>
+          <form class="card form-grid" method="post" style="max-width:640px">
+            {error && !at && <p class="f__error mono" data-server role="alert">{error}</p>}
+            <Field label="Name" name="name" value={t?.name} error={err('name')} required maxlength="80" />
+            <Field label="CORS origins" name="corsOrigins" value={t?.corsOrigins?.join('\n')} error={err('corsOrigins')} multiline hint="One per line, scheme://host[:port]." />
+            <label class="f__row"><input type="checkbox" role="switch" class="switch" name="enabled" checked={t?.enabled} /><span>Enabled</span></label>
+            <div><button class="btn">Save tenant</button></div>
+          </form>
+        </section>
+
+        <ConfirmDialog id="purge-confirm" title={`Purge ${slug}`} confirmValue={slug} action={here} submitLabel="Purge">
+          <p>Removes cached responses for <b>{slug}</b> in all data centers. The next requests go to the origin.</p>
+          <Fragment slot="fields">
+            <input type="hidden" name="_action" value="purge" />
+            <label class="f">
+              <span class="f__label label">Tags (empty = everything for {slug})</span>
+              <input class="f__input mono" name="tags" list="purge-tags" autocomplete="off" placeholder="*" />
+              <datalist id="purge-tags">{tagOptions.map((x) => <option value={x} />)}</datalist>
+            </label>
+          </Fragment>
+        </ConfirmDialog>
+      </>
+    )
+  }
+</Layout>

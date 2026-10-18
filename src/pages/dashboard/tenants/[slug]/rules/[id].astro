@@ -1,0 +1,97 @@
+---
+import Layout from '../../../../../components/dashboard/Layout.astro';
+import Field from '../../../../../components/dashboard/Field.astro';
+import ErrorState from '../../../../../components/dashboard/ErrorState.astro';
+import { rpc, setFlash } from '../../../../../lib/dashboard/edge';
+import { fieldOf, ruleFromForm } from '../../../../../lib/dashboard/forms';
+import { formatDuration } from '../../../../../lib/dashboard/format';
+import { maxStaleness, type RuleInput } from '../../../../../lib/dashboard/contract';
+
+export const prerender = false;
+
+const slug = Astro.params.slug!;
+const id = Astro.params.id!;
+const isNew = id === 'new';
+const back = `/dashboard/tenants/${slug}`;
+const FIELDS = ['originId', 'method', 'pathPattern', 'ttlS', 'swrS', 'staleIfErrorS', 'vary', 'postRead', 'tags'] as const;
+let input: RuleInput | null = null;
+let error: string | null = null;
+
+if (Astro.request.method === 'POST') {
+  const fd = await Astro.request.formData();
+  if (fd.get('_action') === 'delete' && !isNew) {
+    const r = await rpc((api) => api.deleteRule(slug, id));
+    setFlash(Astro.cookies, r.ok ? { kind: 'ok', message: `Deleted rule ${id}.` } : { kind: 'err', message: `Delete failed: ${r.error}` });
+    return Astro.redirect(r.ok ? back : Astro.url.pathname, 303);
+  }
+  fd.set('id', isNew ? '' : id);
+  input = ruleFromForm(fd, slug);
+  const r = await rpc((api) => api.upsertRule(input!));
+  if (r.ok) {
+    setFlash(Astro.cookies, { kind: 'ok', message: `${isNew ? 'Added' : 'Saved'} rule ${r.data.method} ${r.data.pathPattern}.` });
+    return Astro.redirect(back, 303);
+  }
+  error = r.error;
+}
+
+const detail = await rpc((api) => api.getTenant(slug));
+const existing = detail.ok ? detail.data.rules.find((r) => r.id === id) : undefined;
+const missing = detail.ok && !isNew && !existing;
+if (missing || (!detail.ok && /unknown tenant/.test(detail.error))) Astro.response.status = 404;
+const origins = detail.ok ? detail.data.origins : [];
+const r = input ?? existing;
+const at = error ? fieldOf(error, FIELDS) : null;
+const err = (f: string) => (at === f ? error : null);
+const ttl = r?.ttlS ?? 60;
+const swr = r?.swrS ?? 0;
+const sie = r?.staleIfErrorS ?? 0;
+const stale = Number.isFinite(ttl + swr + sie) ? maxStaleness({ ttlS: ttl, swrS: swr, staleIfErrorS: sie }) : null;
+---
+
+<Layout title={isNew ? 'New rule' : id} crumbs={[{ label: 'Tenants', href: '/dashboard/tenants' }, { label: slug, href: back }, { label: isNew ? 'New rule' : `Rule ${id}` }]}>
+  <div class="page-head"><h1 class="page-title">{isNew ? 'NEW RULE' : 'EDIT RULE'}</h1></div>
+  {!detail.ok && <ErrorState message={detail.error} />}
+  {missing && <ErrorState title="No such rule." message={`Rule "${id}" doesn't belong to ${slug}.`} />}
+  {
+    detail.ok && !missing && (
+      <>
+        <form class="card form-grid" method="post" style="max-width:640px">
+          {error && !at && <p class="f__error mono" data-server role="alert">{error}</p>}
+          <div class="f">
+            <label class="f__label label" for="f-originId">Origin</label>
+            <select class="f__input mono" id="f-originId" name="originId" required>
+              {origins.map((o) => <option value={o.id} selected={o.id === r?.originId}>{o.id} · {o.baseUrl}</option>)}
+            </select>
+            {err('originId') && <p class="f__error mono" data-server>{error}</p>}
+          </div>
+          <div class="f">
+            <label class="f__label label" for="f-method">Method</label>
+            <select class="f__input mono" id="f-method" name="method">
+              {['GET', 'POST'].map((m) => <option selected={m === r?.method}>{m}</option>)}
+            </select>
+            {err('method') && <p class="f__error mono" data-server>{error}</p>}
+          </div>
+          <Field label="Path pattern" name="pathPattern" value={r?.pathPattern} error={err('pathPattern')} required pattern="/[A-Za-z0-9._~\-\/*]*" placeholder="/api/v1/stock/*" hint="Path only; * = one segment. Query params go in vary as query:<name>." />
+          <Field label="TTL seconds" name="ttlS" type="number" min="1" max="604800" value={r?.ttlS ?? 60} error={err('ttlS')} required computed={stale ? `max staleness ${formatDuration(stale.normal)} · ${formatDuration(stale.outage)} in outage` : undefined} />
+          <Field label="SWR seconds" name="swrS" type="number" min="0" max="604800" value={r?.swrS ?? 0} error={err('swrS')} required />
+          <Field label="Stale-if-error seconds" name="staleIfErrorS" type="number" min="0" max="2592000" value={r?.staleIfErrorS ?? 0} error={err('staleIfErrorS')} required />
+          <Field label="Vary" name="vary" value={r?.vary?.join(', ')} error={err('vary')} placeholder="query:sku, group:x-customer-group" hint="query:<name>, header:<name>, group:<name> (max one group)." />
+          <Field label="Tags" name="tags" value={r?.tags?.join(', ')} error={err('tags')} placeholder="stock, prices" hint="Purge targets. a-z, 0-9, _ and -." />
+          <label class="f__row"><input type="checkbox" role="switch" class="switch" name="postRead" checked={r?.postRead} /><span>Cache POST reads (POST rules only; JSON body in the key)</span></label>
+          {err('postRead') && <p class="f__error mono" data-server>{error}</p>}
+          <label class="f__row"><input type="checkbox" role="switch" class="switch" name="enabled" checked={r ? r.enabled : true} /><span>Enabled</span></label>
+          <div style="display:flex;gap:12px">
+            <button class="btn">{isNew ? 'Add rule' : 'Save rule'}</button>
+            <a class="btn btn--outline" href={back}>Cancel</a>
+          </div>
+        </form>
+        {!isNew && (
+          <form method="post" class="section-block">
+            <input type="hidden" name="_action" value="delete" />
+            <button class="btn btn--danger">Delete rule</button>
+          </form>
+        )}
+      </>
+    )
+  }
+</Layout>

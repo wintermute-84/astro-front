@@ -1,0 +1,34 @@
+---
+// Label above, underline input below, server error (from the RPC) under it.
+// Client hints use the HTML constraint attributes; the worker re-validates.
+import type { HTMLAttributes } from 'astro/types';
+interface Props extends Omit<HTMLAttributes<'input'>, 'value'> {
+  label: string;
+  name: string;
+  value?: string | number | null;
+  error?: string | null;
+  hint?: string;
+  /** Shown right of the input, e.g. computed max staleness. */
+  computed?: string;
+  multiline?: boolean;
+}
+const { label, name, value, error, hint, computed, multiline, class: cls, ...attrs } = Astro.props;
+const v = value ?? '';
+const id = `f-${name}`;
+---
+
+<div class="f">
+  <label class="f__label label" for={id}>{label}</label>
+  <div class:list={[{ f__row: computed }]}>
+    {
+      multiline ? (
+        <textarea class:list={['f__input mono', cls]} id={id} name={name} rows="2" aria-invalid={error ? 'true' : undefined} aria-describedby={error ? `${id}-err` : undefined} {...(attrs as object)}>{v}</textarea>
+      ) : (
+        <input class:list={['f__input mono', cls]} id={id} name={name} value={v} aria-invalid={error ? 'true' : undefined} aria-describedby={error ? `${id}-err` : undefined} {...attrs} />
+      )
+    }
+    {computed && <output class="f__computed mono" for={id}>{computed}</output>}
+  </div>
+  {error && <p class="f__error mono" id={`${id}-err`} data-server>{error}</p>}
+  {hint && <p class="f__hint mono">{hint}</p>}
+</div>
