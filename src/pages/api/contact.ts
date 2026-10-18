@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { Resend } from 'resend';
+import { env } from 'cloudflare:workers';
 
 export const prerender = false;
 
@@ -57,11 +58,8 @@ async function verifyTurnstile(token: string, secret: string, ip: string) {
   return data.success;
 }
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  const runtime = locals.runtime;
-  const env = runtime?.env as Env | undefined;
-
-  if (!env?.RESEND_API_KEY || !env?.CONTACT_TO_EMAIL || !env?.TURNSTILE_SECRET_KEY) {
+export const POST: APIRoute = async ({ request }) => {
+  if (!env.RESEND_API_KEY || !env.CONTACT_TO_EMAIL || !env.TURNSTILE_SECRET_KEY) {
     return json({ error: 'Server not configured.' }, 500);
   }
 

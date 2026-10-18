@@ -1,10 +1,9 @@
 {
-	"name": "astro-front",
+	"name": "astro-front-production",
 	"compatibility_date": "2025-10-08",
 	"compatibility_flags": ["nodejs_compat"],
-	"main": "./dist/_worker.js/index.js",
+	"main": "@astrojs/cloudflare/entrypoints/server",
 	"assets": {
-		"directory": "./dist",
 		"binding": "ASSETS"
 	},
 	"observability": {
@@ -12,15 +11,12 @@
 	},
 	"account_id": "90f1e06ea9720912eb57d684bc61f396",
 	"upload_source_maps": true,
+	"route": { "pattern": "3dreamlab.com", "custom_domain": true },
 	"env": {
 		"dev": {
+			"name": "astro-front-dev",
 			"account_id": "90f1e06ea9720912eb57d684bc61f396",
 			"route": { "pattern": "astro-front.vlad-kupriyenko.workers.dev", "custom_domain": true }
-
-		},
-		"production": {
-			"account_id": "90f1e06ea9720912eb57d684bc61f396",
-			"route": { "pattern": "3dreamlab.com", "custom_domain": true }
 		}
 	}
 }
