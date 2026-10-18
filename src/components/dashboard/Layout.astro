@@ -1,0 +1,125 @@
+---
+import '../../styles/global.css';
+import '../../styles/dashboard.css';
+import { RANGES, parseRange, tenants } from '../../lib/dashboard/mock';
+import Sheet from './Sheet.astro';
+
+interface Props {
+  title: string;
+  /** Breadcrumb trail; last item is the current page. */
+  crumbs: { label: string; href?: string }[];
+  /** Show the 24H / 7D / 30D control (pages with time series). */
+  ranged?: boolean;
+}
+
+const { title, crumbs, ranged = false } = Astro.props;
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const range = parseRange(Astro.url.searchParams.get('range'));
+
+const nav = [
+  { label: 'Overview', items: [{ label: 'Overview', href: '/dashboard' }] },
+  { label: 'Tenants', items: tenants().map((t) => ({ label: t.slug, href: `/dashboard/tenants/${t.slug}` })) },
+  {
+    label: 'Cache',
+    items: [
+      { label: 'Rules', href: '/dashboard/rules' },
+      { label: 'Purge', href: '/dashboard/purge' },
+    ],
+  },
+  { label: 'Logs', items: [{ label: 'Purge log', href: '/dashboard/logs/purge' }] },
+  { label: 'System', items: [{ label: 'UI kit', href: '/dashboard/ui' }] },
+];
+
+function rangeHref(r: string) {
+  const u = new URL(Astro.url);
+  u.searchParams.set('range', r);
+  return u.pathname + u.search;
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <title>{title} · 3DreamLab Edge</title>
+  </head>
+  <body class="dash">
+    <div class="shell">
+      <nav class="sidebar" aria-label="Dashboard">
+        <a href="/dashboard" class="sidebar__logo">3DREAMLAB <span>/ EDGE</span></a>
+        {
+          nav.map((g) => (
+            <div class="sidebar__group">
+              <span class="label">{g.label}</span>
+              <ul>
+                {g.items.map((i) => (
+                  <li>
+                    <a class="sidebar__item" href={i.href} aria-current={i.href === path ? 'page' : undefined}>
+                      {i.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </nav>
+
+      <div class="main">
+        <header class="topbar">
+          <ol class="crumbs mono" aria-label="Breadcrumb">
+            {
+              crumbs.map((c, i) =>
+                i === crumbs.length - 1 ? (
+                  <li aria-current="page">{c.label}</li>
+                ) : (
+                  <li>{c.href ? <a href={c.href}>{c.label}</a> : c.label}</li>
+                ),
+              )
+            }
+          </ol>
+          <div class="topbar__right">
+            {
+              ranged && (
+                <nav class="segmented mono" aria-label="Time range">
+                  {RANGES.map((r) => (
+                    <a href={rangeHref(r)} aria-current={r === range ? 'true' : undefined}>
+                      {r.toUpperCase()}
+                    </a>
+                  ))}
+                </nav>
+              )
+            }
+            <button type="button" class="btn" popovertarget="test-request">Test request</button>
+          </div>
+        </header>
+
+        <main class="content" id="main">
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <Sheet id="test-request" title="Test request">
+      <form class="form-grid" method="get" action="/dashboard/ui">
+        <label class="f">
+          <span class="f__label label">Tenant</span>
+          <select class="f__input" name="tenant">
+            {tenants().map((t) => <option value={t.slug}>{t.slug}</option>)}
+          </select>
+        </label>
+        <label class="f">
+          <span class="f__label label">Path</span>
+          <input class="f__input mono" name="path" required pattern="/.*" placeholder="/api/v1/stock/SKU-1001" />
+          <span class="f__error mono">Path must start with /</span>
+        </label>
+        <p class="f__hint mono">Live requests arrive with the edge-cache worker (M3). This panel shows the shape only.</p>
+        <div><button class="btn" disabled>Send</button></div>
+      </form>
+    </Sheet>
+    <slot name="after" />
+  </body>
+</html>

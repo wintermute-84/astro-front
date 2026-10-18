@@ -1,0 +1,30 @@
+---
+import type { Kpi } from '../../lib/dashboard/mock';
+interface Props { kpi: Kpi }
+const { kpi } = Astro.props;
+const arrow = { up: '↑', down: '↓', flat: '→' }[kpi.delta.dir];
+
+// 96x32 sparkline as a plain SVG polyline; no chart lib needed for this.
+let points = '';
+if (kpi.spark?.length) {
+  const min = Math.min(...kpi.spark);
+  const span = Math.max(...kpi.spark) - min || 1;
+  const step = 96 / (kpi.spark.length - 1);
+  points = kpi.spark.map((v, i) => `${(i * step).toFixed(1)},${(30 - ((v - min) / span) * 28).toFixed(1)}`).join(' ');
+}
+---
+
+<section class:list={['card', 'kpi', { 'card--lead': kpi.lead }]}>
+  <h2 class="kpi__label mono">{kpi.label}</h2>
+  <span class="kpi__value">{kpi.value}</span>
+  <div class="kpi__foot">
+    <span class="kpi__delta mono" data-good={String(kpi.delta.good)}>{arrow} {kpi.delta.text}</span>
+    {
+      points && (
+        <svg class="kpi__spark" viewBox="0 0 96 32" aria-hidden="true">
+          <polyline points={points} fill="none" stroke={kpi.lead ? 'var(--text-1)' : 'var(--c-hit)'} stroke-width="1.5" />
+        </svg>
+      )
+    }
+  </div>
+</section>

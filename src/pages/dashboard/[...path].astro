@@ -1,0 +1,44 @@
+---
+export const prerender = false;
+
+import Layout from '../../components/dashboard/Layout.astro';
+import { tenants } from '../../lib/dashboard/mock';
+
+const pathParam = Astro.params.path ?? '';
+const segments = pathParam.split('/').filter(Boolean);
+const tenantSlugs = new Set(tenants().map((t) => t.slug));
+
+const isKnown =
+  pathParam === 'rules' ||
+  pathParam === 'purge' ||
+  pathParam === 'logs/purge' ||
+  (segments[0] === 'tenants' && segments.length === 2 && tenantSlugs.has(segments[1]));
+
+if (!isKnown) {
+  Astro.response.status = 404;
+}
+
+const lastSegment = segments.length ? segments[segments.length - 1] : pathParam;
+const pageTitle = lastSegment.toUpperCase();
+
+const crumbs = [
+  { label: 'Dashboard', href: '/dashboard' },
+  ...segments.map((seg) => ({ label: seg.toUpperCase() })),
+];
+
+const bodyText = isKnown
+  ? 'Not built yet. This page arrives with the edge-cache worker (M3).'
+  : 'No such page.';
+---
+
+<Layout title={pageTitle} crumbs={crumbs}>
+  <div class="page-head">
+    <h1 class="page-title">{pageTitle}</h1>
+  </div>
+  <div class="card">
+    <div class="empty">
+      <p>{bodyText}</p>
+      <a class="btn btn--outline" href="/dashboard">Back to overview</a>
+    </div>
+  </div>
+</Layout>

@@ -1,0 +1,381 @@
+---
+export const prerender = false;
+
+import Layout from '../../components/dashboard/Layout.astro';
+import Kpi from '../../components/dashboard/Kpi.astro';
+import Badge from '../../components/dashboard/Badge.astro';
+import Sheet from '../../components/dashboard/Sheet.astro';
+import ConfirmDialog from '../../components/dashboard/ConfirmDialog.astro';
+import Toast from '../../components/dashboard/Toast.astro';
+import {
+  parseRange,
+  overview,
+  rules,
+  purgeLog,
+  tenants,
+  OUTCOMES,
+  formatDuration,
+  maxStaleness,
+} from '../../lib/dashboard/mock';
+
+const range = parseRange(Astro.url.searchParams.get('range'));
+const kpis = overview('acme', range).kpis;
+
+const statusParam = Astro.url.searchParams.get('status') ?? 'all';
+const statusFilter = statusParam === 'enabled' || statusParam === 'off' ? statusParam : 'all';
+const q = Astro.url.searchParams.get('q')?.trim() ?? '';
+
+const allRules = rules('acme');
+const countAll = allRules.length;
+const countEnabled = allRules.filter((r) => r.enabled).length;
+const countOff = allRules.filter((r) => !r.enabled).length;
+
+let filteredRules = allRules;
+if (statusFilter === 'enabled') filteredRules = filteredRules.filter((r) => r.enabled);
+if (statusFilter === 'off') filteredRules = filteredRules.filter((r) => !r.enabled);
+if (q) {
+  const ql = q.toLowerCase();
+  filteredRules = filteredRules.filter(
+    (r) =>
+      r.pathPattern.toLowerCase().includes(ql) ||
+      r.tags.some((t) => t.toLowerCase().includes(ql)),
+  );
+}
+
+const filteredCount = filteredRules.length;
+const purgeEntries = purgeLog();
+const toast = Astro.url.searchParams.get('toast');
+
+const ttlDemo = 300;
+const swrDemo = 600;
+const maxStalenessDemo = formatDuration(ttlDemo + swrDemo);
+---
+
+<Layout
+  title="UI kit"
+  crumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'UI kit' }]}
+>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">UI KIT</h1>
+      <p class="page-sub">Every dashboard primitive on mock data.</p>
+    </div>
+  </div>
+
+  <section class="section-block">
+    <h2 class="label" style="margin:0 0 12px">KPI tiles</h2>
+    <div class="grid">
+      {kpis.map((k) => (
+        <div class="span-3">
+          <Kpi kpi={k} />
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="label" style="margin:0 0 12px">Buttons</h2>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button type="button" class="btn">Save rule</button>
+      <button type="button" class="btn btn--outline">Cancel</button>
+      <button type="button" class="btn btn--danger" commandfor="purge-confirm" command="show-modal">
+        Purge acme…
+      </button>
+      <button type="button" class="btn" disabled>Disabled</button>
+      <button type="button" class="btn btn--outline" popovertarget="filters">Filters</button>
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="label" style="margin:0 0 12px">Outcome badges</h2>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      {OUTCOMES.map((o) => <Badge outcome={o} />)}
+      <span class="mono status--ok">OK</span>
+      <span class="mono status--warn">WARN</span>
+      <span class="mono status--err">ERR</span>
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="label" style="margin:0 0 12px">Rules table</h2>
+    <div class="card">
+      <div class="toolbar">
+        <nav class="tabs mono" aria-label="Rule status">
+          <a href="?status=all" aria-current={statusFilter === 'all' ? 'true' : undefined}>
+            ALL<span class="count">{countAll}</span>
+          </a>
+          <a href="?status=enabled" aria-current={statusFilter === 'enabled' ? 'true' : undefined}>
+            ON<span class="count">{countEnabled}</span>
+          </a>
+          <a href="?status=off" aria-current={statusFilter === 'off' ? 'true' : undefined}>
+            OFF<span class="count">{countOff}</span>
+          </a>
+        </nav>
+        <div class="toolbar__right">
+          <form role="search" method="get" action="/dashboard/ui">
+            <input
+              class="search"
+              type="search"
+              name="q"
+              placeholder="Search path or tag"
+              value={q}
+              aria-label="Search rules"
+            />
+          </form>
+          <button type="button" class="btn btn--outline" popovertarget="filters">Filters</button>
+        </div>
+      </div>
+
+      {
+        filteredCount === 0 ? (
+          <div class="empty">
+            <p>No rules match. Clear the search or add the first rule.</p>
+            <a class="btn" href="/dashboard/ui">Add rule</a>
+          </div>
+        ) : (
+          <>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">METHOD</th>
+                    <th scope="col">PATH</th>
+                    <th scope="col" class="r">TTL</th>
+                    <th scope="col" class="r">SWR</th>
+                    <th scope="col" class="r">STALE-IF-ERROR</th>
+                    <th scope="col" class="r">MAX STALENESS</th>
+                    <th scope="col">VARY</th>
+                    <th scope="col">TAGS</th>
+                    <th scope="col">STATUS</th>
+                    <th scope="col"><span class="sr-only">Actions</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRules.map((r) => {
+                    const ms = maxStaleness(r);
+                    return (
+                      <tr>
+                        <td class="mono">{r.method}</td>
+                        <td class="mono">{r.pathPattern}</td>
+                        <td class="r">{formatDuration(r.ttlS)}</td>
+                        <td class="r">{formatDuration(r.swrS)}</td>
+                        <td class="r">{formatDuration(r.staleIfErrorS)}</td>
+                        <td class="r">
+                          {formatDuration(ms.normal)}
+                          <span class="dim mono"> / {formatDuration(ms.outage)} outage</span>
+                        </td>
+                        <td class="mono">{r.vary.length ? r.vary.join(', ') : '—'}</td>
+                        <td class="mono">{r.tags.join(', ')}</td>
+                        <td>
+                          {r.enabled ? (
+                            <span class="mono status--ok">ON</span>
+                          ) : (
+                            <span class="mono status--warn">OFF</span>
+                          )}
+                        </td>
+                        <td class="row-actions">
+                          <a href="#">EDIT</a>
+                          <a href="#">TEST</a>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div class="pager mono">
+              <span>1–{filteredCount} of {filteredCount}</span>
+              <span>
+                <a href="?page=1">← PREV</a> · <a href="?page=1">NEXT →</a>
+              </span>
+            </div>
+          </>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="label" style="margin:0 0 12px">Form</h2>
+    <form class="card form-grid" method="get" action="/dashboard/ui" style="max-width:640px">
+      <label class="f">
+        <span class="f__label label">Path pattern</span>
+        <input
+          class="f__input mono"
+          name="path"
+          required
+          pattern="/.*"
+          value="/api/v1/stock/*"
+        />
+        <span class="f__error mono">Path must start with /</span>
+      </label>
+      <label class="f">
+        <span class="f__label label">Method</span>
+        <select class="f__input mono" name="method">
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+        </select>
+      </label>
+      <label class="f">
+        <span class="f__label label">TTL seconds</span>
+        <div class="f__row">
+          <input
+            class="f__input mono"
+            type="number"
+            name="ttl"
+            min="0"
+            max="86400"
+            required
+            value={ttlDemo}
+          />
+          <output class="f__computed mono">max staleness {maxStalenessDemo}</output>
+        </div>
+      </label>
+      <label class="f">
+        <span class="f__label label">SWR seconds</span>
+        <input
+          class="f__input mono"
+          type="number"
+          name="swr"
+          min="0"
+          value={swrDemo}
+        />
+      </label>
+      <label class="f">
+        <span class="f__label label">Stale-if-error seconds</span>
+        <input class="f__input mono" type="number" name="staleIfError" min="0" value="3600" />
+      </label>
+      <label class="f__row">
+        <input type="checkbox" role="switch" class="switch" name="postRead" />
+        <span>Cache POST reads (normalized JSON body)</span>
+      </label>
+      <label class="f">
+        <span class="f__label label">Origin URL</span>
+        <input class="f__input mono" name="origin" value="ftp://erp.local" />
+        <span class="f__error mono" data-server>Origin must be an https:// URL</span>
+      </label>
+      <div style="display:flex;gap:12px">
+        <button type="submit" class="btn">Save rule</button>
+        <a class="btn btn--outline" href="/dashboard/ui">Cancel</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="section-block">
+    <h2 class="label" style="margin:0 0 12px">Purge log</h2>
+    <div class="card">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">AT</th>
+              <th scope="col">TENANT</th>
+              <th scope="col">TAGS</th>
+              <th scope="col">ACTOR</th>
+              <th scope="col">RESULT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {purgeEntries.map((e) => {
+              const at =
+                new Date(e.at * 1000).toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+              return (
+                <tr>
+                  <td class="mono">{at}</td>
+                  <td class="mono">{e.tenant}</td>
+                  <td class="mono">{e.tags.join(', ')}</td>
+                  <td>{e.actor}</td>
+                  <td>
+                    {e.result === 'OK' ? (
+                      <span class="mono status--ok">OK</span>
+                    ) : (
+                      <>
+                        <span class="mono status--err">ERR</span>
+                        {e.detail && <span class="dim"> {e.detail}</span>}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-block">
+    <h2 class="label" style="margin:0 0 12px">Toasts</h2>
+    <p class="page-sub">
+      Toasts are shown after a redirect from an action. Preview:
+      <a class="link mono" href="?toast=ok">?toast=ok</a>
+      {' · '}
+      <a class="link mono" href="?toast=err">?toast=err</a>
+    </p>
+  </section>
+
+  <Sheet id="filters" title="Filters">
+    <form class="form-grid" method="get" action="/dashboard/ui">
+      <label class="f">
+        <span class="f__label label">Tenant</span>
+        <select class="f__input" name="tenant">
+          {tenants().map((t) => (
+            <option value={t.slug}>{t.name}</option>
+          ))}
+        </select>
+      </label>
+      <label class="f">
+        <span class="f__label label">Method</span>
+        <select class="f__input" name="method">
+          <option value="">Any</option>
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+        </select>
+      </label>
+      <label class="f">
+        <span class="f__label label">Status</span>
+        <select class="f__input" name="status">
+          <option value="all">All</option>
+          <option value="enabled">Enabled</option>
+          <option value="off">Disabled</option>
+        </select>
+      </label>
+      <button type="submit" class="btn">Apply</button>
+    </form>
+  </Sheet>
+
+  <ConfirmDialog
+    id="purge-confirm"
+    title="Purge acme"
+    confirmValue="acme"
+    action="/dashboard/ui"
+    method="get"
+    submitLabel="Purge"
+  >
+    <p>
+      Removes every cached response tagged for <b>acme</b> in all data centers. Next requests go to
+      the origin.
+    </p>
+    <input slot="fields" type="hidden" name="toast" value="purged" />
+  </ConfirmDialog>
+
+  {
+    toast === 'ok' && (
+      <Toast kind="ok" message="Saved rule /api/v1/stock/*" dismissHref="/dashboard/ui" />
+    )
+  }
+  {
+    toast === 'purged' && (
+      <Toast kind="ok" message="Purged 3 tags for acme" dismissHref="/dashboard/ui" />
+    )
+  }
+  {
+    toast === 'err' && (
+      <Toast
+        kind="err"
+        message="Purge failed: upstream purge API timeout"
+        dismissHref="/dashboard/ui"
+      />
+    )
+  }
+</Layout>

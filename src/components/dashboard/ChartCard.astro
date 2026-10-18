@@ -1,0 +1,38 @@
+---
+// Chart card: title left, mono mini-stats right, fixed-height plot, and a
+// "Table" toggle with the same numbers for screen readers / copying.
+interface Props {
+  title: string;
+  stats?: [string, string][];
+  class?: string;
+}
+const { title, stats = [], class: cls } = Astro.props;
+---
+
+<section class:list={['card', cls]}>
+  <div class="card__head">
+    <h2 class="label card__title">{title}</h2>
+    {
+      stats.length > 0 && (
+        <p class="card__stats mono" style="margin:0">
+          {stats.map(([k, v]) => (
+            <span>
+              {k} <b class="num">{v}</b>
+            </span>
+          ))}
+        </p>
+      )
+    }
+  </div>
+  <div class="chart"><slot /></div>
+  {
+    Astro.slots.has('table') && (
+      <details class="chart-table">
+        <summary class="mono">TABLE</summary>
+        <div class="table-wrap">
+          <slot name="table" />
+        </div>
+      </details>
+    )
+  }
+</section>

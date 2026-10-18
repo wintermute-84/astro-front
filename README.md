@@ -41,16 +41,27 @@ cp .dev.vars.example .dev.vars
 
 ### Production secrets
 
-Set via Wrangler for the **production** environment:
+Set via Wrangler (the top-level config in `wrangler.json` is production, worker `astro-front-production`):
 
 ```bash
-wrangler secret put RESEND_API_KEY --env production
-wrangler secret put TURNSTILE_SECRET_KEY --env production
-wrangler secret put CONTACT_TO_EMAIL --env production
-wrangler secret put PUBLIC_TURNSTILE_SITE_KEY --env production
+wrangler secret put RESEND_API_KEY
+wrangler secret put TURNSTILE_SECRET_KEY
+wrangler secret put CONTACT_TO_EMAIL
+wrangler secret put PUBLIC_TURNSTILE_SITE_KEY
 ```
 
 For local dev, copy `.dev.vars.example` to `.dev.vars` and fill in all four values (including `PUBLIC_TURNSTILE_SITE_KEY`).
+
+### Dashboard (`/dashboard`, private)
+
+Basic auth in `src/middleware.ts` (one function in `src/lib/dashboard/auth.ts`), `noindex`, not in the sitemap. Mock data only (`src/lib/dashboard/mock.ts`) until the edge-cache worker exists. Fails closed: without both secrets every `/dashboard*` request gets 401.
+
+```bash
+wrangler secret put DASHBOARD_USER
+wrangler secret put DASHBOARD_PASS
+```
+
+Local: add both to `.dev.vars`. Checks: `pnpm test` (mock data) and `DASHBOARD_USER=… DASHBOARD_PASS=… node scripts/check-dashboard-auth.mjs <baseUrl>` against `pnpm preview` or a deployed version.
 
 ### External setup
 

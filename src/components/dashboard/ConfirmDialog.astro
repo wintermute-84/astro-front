@@ -1,0 +1,32 @@
+---
+// The app's only confirm: irreversible actions. Modal <dialog> with scrim; the
+// submit stays blocked (constraint validation) until the exact slug is typed.
+// Open with <button commandfor={id} command="show-modal">.
+interface Props {
+  id: string;
+  title: string;
+  confirmValue: string;
+  action: string;
+  method?: 'get' | 'post';
+  submitLabel: string;
+}
+const { id, title, confirmValue, action, method = 'post', submitLabel } = Astro.props;
+const pattern = confirmValue.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+---
+
+<dialog class="dialog" id={id} aria-labelledby={`${id}-title`} closedby="any">
+  <form class="dialog__body" method={method} action={action}>
+    <h2 id={`${id}-title`}>{title}</h2>
+    <slot />
+    <label class="f">
+      <span class="f__label label">Type <span class="mono" style="color:var(--text-1);text-transform:none">{confirmValue}</span> to confirm</span>
+      <input class="f__input mono" name="confirm" required pattern={pattern} autocomplete="off" />
+      <span class="f__error mono">Doesn't match {confirmValue}</span>
+    </label>
+    <slot name="fields" />
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--outline" commandfor={id} command="close">Cancel</button>
+      <button class="btn btn--danger">{submitLabel}</button>
+    </div>
+  </form>
+</dialog>

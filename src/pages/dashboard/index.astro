@@ -1,0 +1,120 @@
+---
+import Layout from '../../components/dashboard/Layout.astro';
+import Kpi from '../../components/dashboard/Kpi.astro';
+import ChartCard from '../../components/dashboard/ChartCard.astro';
+import Badge from '../../components/dashboard/Badge.astro';
+import Chart, { type ChartSeries } from '../../components/dashboard/Chart.tsx';
+import { OUTCOMES, overview, parseRange, purgeLog, type Outcome } from '../../lib/dashboard/mock';
+
+export const prerender = false;
+
+const range = parseRange(Astro.url.searchParams.get('range'));
+const o = overview('all', range);
+const R = range.toUpperCase();
+
+const COLORS: Record<Outcome, string> = {
+  HIT: '#ff2400',
+  MISS: '#3987e5',
+  STALE: '#c98500',
+  'STALE-ERROR': '#9085e9',
+  BYPASS: '#888',
+};
+
+const latency: ChartSeries[] = [
+  { label: 'EDGE P50', values: o.latency.edgeP50, color: COLORS.HIT },
+  { label: 'EDGE P95', values: o.latency.edgeP95, color: COLORS.HIT, dash: true },
+  { label: 'ORIGIN P50', values: o.latency.originP50, color: COLORS.MISS },
+  { label: 'ORIGIN P95', values: o.latency.originP95, color: COLORS.MISS, dash: true },
+];
+const hit: ChartSeries[] = [{ label: 'HIT RATIO', values: o.hitRatio, color: COLORS.HIT }];
+const outcomes: ChartSeries[] = OUTCOMES.map((k) => ({
+  label: k,
+  values: o.outcomes[k],
+  color: COLORS[k],
+  hatch: k === 'BYPASS',
+}));
+
+const median = (a: number[]) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
+const ms = (a: number[]) => `${Math.round(median(a))} ms`;
+const when = (s: number) => new Date(s * 1000).toISOString().slice(5, 16).replace('T', ' ');
+const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
+const recent = purgeLog().slice(0, 5);
+---
+
+<Layout title="Overview" crumbs={[{ label: 'Overview' }, { label: `All tenants · ${R}` }]} ranged>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">OVERVIEW</h1>
+      <p class="page-sub">All tenants, last {R}. Mock data until the edge-cache worker reports to Analytics Engine.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+    {o.kpis.map((k) => <div class="span-3"><Kpi kpi={k} /></div>)}
+  </div>
+
+  <div class="grid">
+    <ChartCard
+      class="span-8"
+      title="Latency · edge vs origin (log)"
+      stats={[
+        ['edge p50', ms(o.latency.edgeP50)],
+        ['origin p50', ms(o.latency.originP50)],
+      ]}
+    >
+      <Chart client:load kind="line" log t={o.t} series={latency} unit="ms" label={`p50 and p95 latency, edge vs origin, last ${R}`} />
+      <table class="table" slot="table">
+        <thead><tr><th>Time UTC</th>{latency.map((s) => <th class="r">{s.label}</th>)}</tr></thead>
+        <tbody>
+          {o.t.map((t, i) => <tr><td class="mono">{when(t)}</td>{latency.map((s) => <td class="r">{Math.round(s.values[i])}</td>)}</tr>)}
+        </tbody>
+      </table>
+    </ChartCard>
+
+    <ChartCard class="span-4" title="Hit ratio" stats={[['now', pct(o.hitRatio.at(-1)!)]]}>
+      <Chart client:load kind="line" t={o.t} series={hit} unit="%" label={`Hit ratio, last ${R}`} />
+      <table class="table" slot="table">
+        <thead><tr><th>Time UTC</th><th class="r">Hit ratio</th></tr></thead>
+        <tbody>{o.t.map((t, i) => <tr><td class="mono">{when(t)}</td><td class="r">{pct(o.hitRatio[i])}</td></tr>)}</tbody>
+      </table>
+    </ChartCard>
+  </div>
+
+  <div class="grid">
+    <ChartCard class="span-8" title="Outcomes per bucket">
+      <Chart client:visible kind="stacked" t={o.t} series={outcomes} unit="" label={`Requests per cache outcome, last ${R}`} />
+      <table class="table" slot="table">
+        <thead><tr><th>Time UTC</th>{OUTCOMES.map((k) => <th class="r">{k}</th>)}</tr></thead>
+        <tbody>
+          {o.t.map((t, i) => <tr><td class="mono">{when(t)}</td>{OUTCOMES.map((k) => <td class="r">{o.outcomes[k][i].toLocaleString('en')}</td>)}</tr>)}
+        </tbody>
+      </table>
+    </ChartCard>
+
+    <section class="card span-4">
+      <div class="card__head">
+        <h2 class="label card__title">Recent purges</h2>
+        <a class="mono card__stats" href="/dashboard/logs/purge">ALL →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead><tr><th>At UTC</th><th>Tenant</th><th>Result</th></tr></thead>
+          <tbody>
+            {
+              recent.map((p) => (
+                <tr>
+                  <td class="mono">{when(p.at)}</td>
+                  <td class="mono">{p.tenant}</td>
+                  <td class={`mono status--${p.result === 'OK' ? 'ok' : 'err'}`}>{p.result}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="mono" style="margin:16px 0 0;display:flex;gap:12px;flex-wrap:wrap">
+        {OUTCOMES.map((k) => <Badge outcome={k} />)}
+      </p>
+    </section>
+  </div>
+</Layout>

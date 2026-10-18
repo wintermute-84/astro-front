@@ -1,0 +1,11 @@
+---
+// Server-rendered result toast (the redirect after an action carries it).
+// OK fades after 5 s; errors stay until dismissed. Dismiss = link without it.
+interface Props { kind: 'ok' | 'err'; message: string; dismissHref: string }
+const { kind, message, dismissHref } = Astro.props;
+---
+
+<div class={`toast toast--${kind}`} role={kind === 'err' ? 'alert' : 'status'}>
+  <span>{kind === 'err' && <b class="status--err mono">ERR </b>}{message}</span>
+  <a href={dismissHref}>DISMISS</a>
+</div>

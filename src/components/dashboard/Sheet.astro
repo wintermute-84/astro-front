@@ -1,0 +1,14 @@
+---
+// Right-side panel. Native popover (manual: stays open while the page is used,
+// no scrim). Open with <button popovertarget={id}>.
+interface Props { id: string; title: string }
+const { id, title } = Astro.props;
+---
+
+<aside class="sheet" id={id} popover="manual" aria-labelledby={`${id}-title`}>
+  <div class="sheet__head">
+    <h2 class="label card__title" id={`${id}-title`}>{title}</h2>
+    <button type="button" class="icon-btn" popovertarget={id} popovertargetaction="hide" aria-label="Close">×</button>
+  </div>
+  <div class="sheet__body"><slot /></div>
+</aside>

@@ -1,0 +1,7 @@
+---
+import type { Outcome } from '../../lib/dashboard/mock';
+interface Props { outcome: Outcome }
+const { outcome } = Astro.props;
+---
+
+<span class={`badge mono badge--${outcome.toLowerCase()}`}>{outcome}</span>
