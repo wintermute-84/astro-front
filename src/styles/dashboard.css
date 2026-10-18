@@ -188,6 +188,7 @@ body.dash {
 .crumbs [aria-current='page'] { color: var(--text-1); }
 
 .topbar__right { display: flex; align-items: center; gap: 16px; }
+.topbar__user { color: var(--text-2); font-size: 0.75rem; overflow-wrap: anywhere; }
 
 .segmented { display: flex; border: 1px solid var(--rule); }
 

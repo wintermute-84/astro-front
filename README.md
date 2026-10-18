@@ -54,14 +54,14 @@ For local dev, copy `.dev.vars.example` to `.dev.vars` and fill in all four valu
 
 ### Dashboard (`/dashboard`, private)
 
-Basic auth in `src/middleware.ts` (one function in `src/lib/dashboard/auth.ts`), `noindex`, not in the sitemap. Mock data only (`src/lib/dashboard/mock.ts`) until the edge-cache worker exists. Fails closed: without both secrets every `/dashboard*` request gets 401.
+Auth in `src/middleware.ts` (one function, `authorize()` in `src/lib/dashboard/auth.ts`), `noindex`, not in the sitemap. Mock data only (`src/lib/dashboard/mock.ts`) until the edge-cache worker exists. If `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD` are set, only a valid Cloudflare Access JWT (`Cf-Access-Jwt-Assertion`, verified with `jose`) is accepted, otherwise 403. If not, basic auth. Fails closed: with neither configured every `/dashboard*` request gets 401. The verified user is `Astro.locals.user`.
 
 ```bash
 wrangler secret put DASHBOARD_USER
 wrangler secret put DASHBOARD_PASS
 ```
 
-Local: add both to `.dev.vars`. Checks: `pnpm test` (mock data) and `DASHBOARD_USER=… DASHBOARD_PASS=… node scripts/check-dashboard-auth.mjs <baseUrl>` against `pnpm preview` or a deployed version.
+Local: add both to `.dev.vars` (leave the Access vars unset). Access setup steps live in the vault (Edge Dashboard Plan, M5 runbook). Checks: `pnpm test` (mock data + auth/JWT cases) and `DASHBOARD_USER=… DASHBOARD_PASS=… node scripts/check-dashboard-auth.mjs <baseUrl>` against `pnpm preview` or a deployed version.
 
 ### External setup
 

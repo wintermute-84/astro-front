@@ -93,6 +93,7 @@ function rangeHref(r: string) {
                 </nav>
               )
             }
+            {Astro.locals.user && <span class="topbar__user mono">{Astro.locals.user.email}</span>}
             <button type="button" class="btn" popovertarget="test-request">Test request</button>
           </div>
         </header>
