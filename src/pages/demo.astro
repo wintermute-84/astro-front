@@ -1,6 +1,7 @@
 ---
 export const prerender = true;
 import '../styles/global.css';
+import syne800 from '@fontsource/syne/files/syne-latin-800-normal.woff2?url';
 ---
 
 <!doctype html>
@@ -15,6 +16,7 @@ import '../styles/global.css';
     />
     <meta name="robots" content="noindex" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="preload" as="font" type="font/woff2" href={syne800} crossorigin />
     <link rel="canonical" href="https://3dreamlab.com/demo/" />
   </head>
   <body>
@@ -105,6 +107,8 @@ import '../styles/global.css';
       .demo-title { font-size: var(--heading-lg); margin-bottom: 1rem; }
       .demo-lead { max-width: 42rem; margin: 0 0 2rem; font-size: var(--text-body); color: #b5b3ad; }
       .controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+      /* Stack on phones regardless of font: a Syne swap must not re-wrap the row (CLS). */
+      @media (max-width: 599px) { .controls { flex-direction: column; align-items: flex-start; } }
       .btn {
         font: 800 var(--text-label) var(--font-heading);
         letter-spacing: 0.08em;
@@ -145,7 +149,7 @@ import '../styles/global.css';
         transition: transform 100ms ease;
       }
       .switch[aria-checked='true'] .switch__thumb { transform: translateX(20px); }
-      .ms-line { margin: 0; min-height: clamp(4rem, 14vw, 9rem); line-height: 1; }
+      .ms-line { margin: 0; height: clamp(4rem, 14vw, 9rem); line-height: 1; white-space: nowrap; }
       .ms {
         font-family: var(--font-heading);
         font-weight: 800;
@@ -153,7 +157,7 @@ import '../styles/global.css';
         font-size: clamp(4rem, 14vw, 9rem);
         line-height: 1;
       }
-      .ms-unit { font: 800 var(--heading-lg)/1 var(--font-heading); color: #b5b3ad; }
+      .ms-unit { font: 800 clamp(1.5rem, 6vw, var(--heading-lg))/1 var(--font-heading); color: #b5b3ad; }
       .badge-line { margin: 0.5rem 0 0; min-height: 1.75rem; }
       .badge {
         font: var(--text-meta) var(--font-mono);
