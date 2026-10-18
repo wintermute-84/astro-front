@@ -12,6 +12,9 @@
 	"account_id": "90f1e06ea9720912eb57d684bc61f396",
 	"upload_source_maps": true,
 	"route": { "pattern": "3dreamlab.com", "custom_domain": true },
+	"ratelimits": [
+		{ "name": "DASHBOARD_AUTH_LIMITER", "namespace_id": "2001", "simple": { "limit": 3, "period": 60 } }
+	],
 	"env": {
 		"dev": {
 			"name": "astro-front-dev",
