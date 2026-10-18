@@ -10,6 +10,7 @@ interface __BaseEnv_Env {
 	DASHBOARD_USER: string;
 	DASHBOARD_PASS: string;
 	DASHBOARD_AUTH_LIMITER?: RateLimit;
+	DEMO_IP_LIMITER?: RateLimit;
 	EDGE_CACHE?: Service /* entrypoint EdgeCacheRPC from edge-cache */;
 }
 declare namespace Cloudflare {

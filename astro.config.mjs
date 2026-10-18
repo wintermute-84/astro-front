@@ -8,7 +8,8 @@ export default defineConfig({
   site: "https://3dreamlab.com",
   integrations: [
     react(),
-    sitemap({ filter: (page) => !new URL(page).pathname.startsWith('/dashboard') }),
+    // /demo stays unlisted (noindex, no nav link) until the owner's first-audit gate.
+    sitemap({ filter: (page) => !/^\/(dashboard|demo)(\/|$)/.test(new URL(page).pathname) }),
   ],
   build: { inlineStylesheets: "always" },
   session: false,

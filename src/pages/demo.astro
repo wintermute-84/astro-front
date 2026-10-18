@@ -1,0 +1,310 @@
+---
+export const prerender = true;
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Edge cache demo · 3DreamLab</title>
+    <meta
+      name="description"
+      content="Live demo: the same slow API called directly and through the 3DreamLab edge cache."
+    />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="canonical" href="https://3dreamlab.com/demo/" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="topbar__logo" href="/">3DREAMLAB</a>
+    </header>
+    <main>
+      <section class="section demo-section">
+        <div class="section__inner">
+          <span class="demo-meta">LIVE DEMO</span>
+          <h1 class="demo-title">Slow API, fast edge.</h1>
+          <p class="demo-lead">
+            The origin below answers in about 800&nbsp;ms, like a busy ERP. Call it directly, then through the edge
+            cache. Turn on the outage to see the cache keep answering.
+          </p>
+
+          <div class="controls">
+            <button type="button" class="btn btn--secondary" id="call-origin">CALL ORIGIN</button>
+            <button type="button" class="btn btn--primary" id="call-edge">CALL THROUGH EDGE</button>
+          </div>
+
+          <div class="outage-row">
+            <label class="outage-label" for="outage">Simulate outage</label>
+            <button
+              type="button"
+              class="switch"
+              id="outage"
+              role="switch"
+              aria-checked="false"
+            >
+              <span class="switch__track" aria-hidden="true"><span class="switch__thumb"></span></span>
+            </button>
+          </div>
+
+          <div class="result" id="result-region" aria-live="polite" aria-atomic="true" aria-busy="false">
+            <p class="ms-line">
+              <output id="ms" class="ms">—</output><span class="ms-unit"> ms</span>
+            </p>
+            <p class="badge-line">
+              <span id="badge" class="badge" data-outcome="">—</span>
+            </p>
+            <p id="status" class="mono status-line"></p>
+            <span class="sr-only" id="sr-announce"></span>
+          </div>
+
+          <figure class="chart-wrap">
+            <svg id="chart" viewBox="0 0 400 120" role="img" aria-label="Last 20 calls, timing in milliseconds" width="100%">
+            </svg>
+            <figcaption class="legend">
+              <span class="legend__item"><span class="swatch swatch--edge" aria-hidden="true"></span> Edge</span>
+              <span class="legend__item"><span class="swatch swatch--origin" aria-hidden="true"></span> Origin</span>
+              <span class="legend__item"
+                ><span class="swatch swatch--stale-error" aria-hidden="true"></span> Stale-error</span
+              >
+            </figcaption>
+          </figure>
+
+          <ol id="calls-sr" class="sr-only" aria-label="Recent calls"></ol>
+
+          <p class="footnote">
+            Synthetic data from a mock origin. Timings are measured at the edge worker, without your own network round trip.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <style>
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .topbar { padding: 1rem 5vw; border-bottom: 1px solid var(--gray-dark); }
+      .topbar__logo {
+        font: 800 var(--text-nav) var(--font-heading);
+        letter-spacing: 0.12em;
+        color: var(--white);
+        text-transform: uppercase;
+      }
+      .demo-section { background: var(--black); color: var(--white); min-height: auto; padding-top: 3rem; padding-bottom: 4rem; }
+      .demo-meta { display: block; margin-bottom: 1rem; font: var(--text-meta) var(--font-mono); letter-spacing: 0.14em; color: #b5b3ad; }
+      .demo-title { font-size: var(--heading-lg); margin-bottom: 1rem; }
+      .demo-lead { max-width: 42rem; margin: 0 0 2rem; font-size: var(--text-body); color: #b5b3ad; }
+      .controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; }
+      .btn {
+        font: 800 var(--text-label) var(--font-heading);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        min-height: 48px;
+        padding: 0 1.5rem;
+        border: none;
+        cursor: pointer;
+        transition: transform 100ms ease;
+      }
+      .btn--secondary { background: transparent; color: var(--white); box-shadow: inset 0 0 0 1px var(--white); }
+      .btn--primary { background: #ff2400; color: var(--black); }
+      .btn:focus-visible, .switch:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+      .btn:active:not([aria-disabled='true']) { transform: scale(0.97); }
+      .btn[aria-disabled='true'] { opacity: 0.45; cursor: progress; }
+      .outage-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem; }
+      .outage-label { font-size: var(--text-body); color: #b5b3ad; cursor: pointer; }
+      .switch {
+        padding: 0;
+        border: none;
+        background: none;
+        cursor: pointer;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .switch__track { display: block; width: 44px; height: 24px; background: var(--gray-dark); position: relative; }
+      .switch[aria-checked='true'] .switch__track { background: #ff2400; }
+      .switch__thumb {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: var(--white);
+        transition: transform 100ms ease;
+      }
+      .switch[aria-checked='true'] .switch__thumb { transform: translateX(20px); }
+      .ms-line { margin: 0; min-height: clamp(4rem, 14vw, 9rem); line-height: 1; }
+      .ms {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        font-size: clamp(4rem, 14vw, 9rem);
+        line-height: 1;
+      }
+      .ms-unit { font: 800 var(--heading-lg)/1 var(--font-heading); color: #b5b3ad; }
+      .badge-line { margin: 0.5rem 0 0; min-height: 1.75rem; }
+      .badge {
+        font: var(--text-meta) var(--font-mono);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--white);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .badge::before { content: ''; width: 10px; height: 10px; flex-shrink: 0; background: var(--gray); }
+      .badge[data-outcome='HIT']::before { background: #ff2400; }
+      .badge[data-outcome='MISS']::before, .badge[data-outcome='ORIGIN']::before { background: #3987e5; }
+      .badge[data-outcome='STALE']::before { background: #c98500; }
+      .badge[data-outcome='STALE-ERROR']::before { background: #9085e9; }
+      .badge[data-outcome='BYPASS']::before { background: #888; }
+      .status-line {
+        margin: 0.75rem 0 0;
+        min-height: 1.5rem;
+        font: var(--text-meta) var(--font-mono);
+        color: #b5b3ad;
+      }
+      .chart-wrap { margin: 2rem 0 1.5rem; max-width: 40rem; }
+      #chart { display: block; width: 100%; height: auto; }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem 1.5rem;
+        margin-top: 0.75rem;
+        font: var(--text-meta) var(--font-mono);
+        color: #b5b3ad;
+      }
+      .legend__item { display: inline-flex; align-items: center; gap: 0.4rem; }
+      .swatch { width: 10px; height: 10px; }
+      .swatch--edge { background: #ff2400; }
+      .swatch--origin { background: #3987e5; }
+      .swatch--stale-error { background: transparent; box-shadow: inset 0 0 0 2px #9085e9; }
+      .footnote { font: var(--text-meta) var(--font-mono); color: #b5b3ad; margin: 0; }
+      @media (prefers-reduced-motion: reduce) { .btn, .switch__thumb { transition: none; } }
+    </style>
+
+    <script>
+      type CallRow = { via: 'origin' | 'edge'; outcome: string; ms: number; status: number };
+
+      const msEl = document.getElementById('ms') as HTMLOutputElement;
+      const badgeEl = document.getElementById('badge') as HTMLSpanElement;
+      const statusEl = document.getElementById('status') as HTMLParagraphElement;
+      const chartEl = document.getElementById('chart') as SVGSVGElement;
+      const callsSr = document.getElementById('calls-sr') as HTMLOListElement;
+      const resultRegion = document.getElementById('result-region') as HTMLDivElement;
+      const srAnnounce = document.getElementById('sr-announce') as HTMLSpanElement;
+      const outageBtn = document.getElementById('outage') as HTMLButtonElement;
+      const btnOrigin = document.getElementById('call-origin') as HTMLButtonElement;
+      const btnEdge = document.getElementById('call-edge') as HTMLButtonElement;
+
+      let outage = false;
+      let busy = false;
+      const calls: CallRow[] = [];
+
+      outageBtn.addEventListener('click', () => {
+        outage = !outage;
+        outageBtn.setAttribute('aria-checked', outage ? 'true' : 'false');
+      });
+
+      // aria-disabled, not disabled: a disabled button drops keyboard focus mid-call.
+      function setBusy(on: boolean) {
+        busy = on;
+        for (const b of [btnOrigin, btnEdge]) b.setAttribute('aria-disabled', String(on));
+        resultRegion.setAttribute('aria-busy', String(on));
+      }
+
+      function renderChart() {
+        while (chartEl.firstChild) chartEl.removeChild(chartEl.firstChild);
+        const slotW = 400 / 20;
+        const barW = slotW - 2;
+        const maxMs = Math.max(1000, ...calls.map((c) => c.ms));
+        calls.forEach((c, i) => {
+          // 2-unit floor so a 0 ms HIT still shows as a bar.
+          const h = Math.max(2, (c.ms / maxMs) * 110);
+          const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rect.setAttribute('x', String(i * slotW + 1));
+          rect.setAttribute('y', String(120 - h));
+          rect.setAttribute('width', String(barW));
+          rect.setAttribute('height', String(h));
+          rect.setAttribute('fill', c.via === 'edge' ? '#ff2400' : '#3987e5');
+          const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+          const viaLabel = c.via === 'edge' ? 'Edge' : 'Origin';
+          title.textContent = `${viaLabel} ${c.outcome} ${Math.round(c.ms)} ms`;
+          rect.appendChild(title);
+          if (c.outcome === 'STALE-ERROR') {
+            rect.setAttribute('stroke', '#9085e9');
+            rect.setAttribute('stroke-width', '2');
+          }
+          chartEl.appendChild(rect);
+        });
+      }
+
+      function renderSrList() {
+        callsSr.replaceChildren();
+        calls.forEach((c) => {
+          const li = document.createElement('li');
+          const viaLabel = c.via === 'edge' ? 'Edge' : 'Origin';
+          li.textContent = `${viaLabel}, ${c.outcome}, ${Math.round(c.ms)} ms`;
+          callsSr.appendChild(li);
+        });
+      }
+
+      function showResult(outcome: string, ms: number, status: number) {
+        const rounded = Math.round(ms);
+        msEl.textContent = String(rounded);
+        badgeEl.textContent = outcome;
+        badgeEl.setAttribute('data-outcome', outcome);
+        let statusText = `HTTP ${status}`;
+        if (status >= 500) statusText += ' · origin down';
+        statusEl.textContent = statusText;
+        statusEl.removeAttribute('role');
+        srAnnounce.textContent = `${rounded} ms, ${outcome}`;
+      }
+
+      async function call(via: 'origin' | 'edge') {
+        if (busy) return;
+        setBusy(true);
+        try {
+          const res = await fetch('/api/demo', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ via, outage }),
+          });
+          const data = await res.json().catch(() => null);
+          if (!res.ok) {
+            const err = data && typeof data.error === 'string' ? data.error : 'Request failed.';
+            statusEl.textContent = err;
+            statusEl.setAttribute('role', 'alert');
+            return;
+          }
+          const row = data as { outcome: string; status: number; ms: number };
+          showResult(row.outcome, row.ms, row.status);
+          calls.push({ via, outcome: row.outcome, ms: row.ms, status: row.status });
+          if (calls.length > 20) calls.shift();
+          renderChart();
+          renderSrList();
+        } catch {
+          statusEl.textContent = 'Network error. Try again.';
+          statusEl.setAttribute('role', 'alert');
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      btnOrigin.addEventListener('click', () => call('origin'));
+      btnEdge.addEventListener('click', () => call('edge'));
+    </script>
+  </body>
+</html>
