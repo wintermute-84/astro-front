@@ -7,14 +7,17 @@ export type MailEnv = { RESEND_OTP_API_KEY?: string };
 
 const FROM = '3DreamLab <login@3dreamlab.com>';
 
-/** true when Resend accepted it. Never throws; failures are logged without the recipient. */
-export async function sendMail(db: D1Database, env: MailEnv, mail: Mail, now: number, fetchFn: typeof fetch = fetch): Promise<boolean> {
+/**
+ * true when Resend accepted it. Never throws; failures are logged without the recipient.
+ * `cap`: owner notifications pass OTP.OWNER_MAILS_UNTIL so sign-up spam can't use up the login codes' share.
+ */
+export async function sendMail(db: D1Database, env: MailEnv, mail: Mail, now: number, cap: number = OTP.MAILS_PER_DAY, fetchFn: typeof fetch = fetch): Promise<boolean> {
   if (!env.RESEND_OTP_API_KEY) {
     console.warn('mail skipped: RESEND_OTP_API_KEY not set');
     return false;
   }
-  if ((await mailsToday(db, now)) >= OTP.MAILS_PER_DAY) {
-    console.warn(`mail skipped: daily cap ${OTP.MAILS_PER_DAY} reached`);
+  if ((await mailsToday(db, now)) >= cap) {
+    console.warn(`mail skipped: daily cap ${cap} reached`);
     return false;
   }
   await logEvent(db, 'mail', null, null, now).run();

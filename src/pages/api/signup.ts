@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { env, waitUntil } from 'cloudflare:workers';
 import { createSignupRequest, parseSignup } from '../../lib/app/signup';
+import { OTP } from '../../lib/app/otp';
 import { ownerSignupMail, sendMail } from '../../lib/app/mail';
 import { isSameOriginWrite } from '../../lib/app/paths';
 import { clientIp, nowS, siteDb, verifyTurnstile } from '../../lib/app/site';
@@ -19,6 +20,7 @@ export const POST: APIRoute = async ({ request, url }) => {
   } catch {
     return json({ error: 'Invalid request.' });
   }
+  if (!body || typeof body !== 'object') return json({ error: 'Invalid request.' });
   const parsed = parseSignup(body);
   if (!parsed.ok) return json({ error: parsed.error });
   const ip = clientIp(request);
@@ -27,6 +29,6 @@ export const POST: APIRoute = async ({ request, url }) => {
   const db = siteDb();
   const now = nowS();
   const id = await createSignupRequest(db, parsed.value, ip, now);
-  if (id && env.CONTACT_TO_EMAIL) waitUntil(sendMail(db, env, ownerSignupMail(env.CONTACT_TO_EMAIL, parsed.value, url.origin), now));
+  if (id && env.CONTACT_TO_EMAIL) waitUntil(sendMail(db, env, ownerSignupMail(env.CONTACT_TO_EMAIL, parsed.value, url.origin), now, OTP.OWNER_MAILS_UNTIL));
   return json({ ok: true });
 };

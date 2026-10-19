@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canCreateProject, customerRuleFromForm, customerTestFromForm, pickProject, projectFromForm, purgeFromForm, usageMeter } from './forms.ts';
+import { canCreateProject, isSafeTestPath, customerRuleFromForm, customerTestFromForm, pickProject, projectFromForm, purgeFromForm, usageMeter } from './forms.ts';
 import type { TenantView } from './contract.ts';
 
 const fd = (o: Record<string, string>) => {
@@ -62,4 +62,9 @@ test('usage meter clamps and tones', () => {
   assert.deepEqual(usageMeter(800, 1000), { pct: 80, tone: 'warn' });
   assert.deepEqual(usageMeter(1500, 1000), { pct: 100, tone: 'err' });
   assert.deepEqual(usageMeter(5, 0), { pct: 100, tone: 'err' });
+});
+
+test('isSafeTestPath refuses dot segments (plain and %2e-encoded) and backslashes', () => {
+  for (const ok of ['/', '/v1/stock/123', '/a.b/c..d', '/.well-known-ish']) assert.equal(isSafeTestPath(ok), true, ok);
+  for (const bad of ['v1', '/../other/x', '/a/./b', '/%2e%2e/other', '/%2E./x', '/a/..', '/a\\..\\b']) assert.equal(isSafeTestPath(bad), false, bad);
 });

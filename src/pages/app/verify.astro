@@ -1,11 +1,10 @@
 ---
 // Step 2: the code from the email, bound to this browser's login_id cookie.
-import { env, waitUntil } from 'cloudflare:workers';
+import { waitUntil } from 'cloudflare:workers';
 import Bare from '../../components/app/Bare.astro';
 import { OTP, cleanup, resendCode, verifyCode } from '../../lib/app/otp';
 import { LOGIN_COOKIE, SESSION_COOKIE, SESSION_TTL_S, completeLogin, cookieOpts } from '../../lib/app/session';
-import { codeMail, sendMail } from '../../lib/app/mail';
-import { clientIp, nowS, otpIpAllowed, otpPepper, siteDb } from '../../lib/app/site';
+import { clientIp, issueCodeLater, nowS, otpIpAllowed, otpPepper, siteDb } from '../../lib/app/site';
 
 export const prerender = false;
 
@@ -22,11 +21,7 @@ if (Astro.request.method === 'POST') {
   const ctx = { pepper: otpPepper(), ip, now };
   if (!(await otpIpAllowed(ip))) error = 'Too many attempts from your network. Wait a minute and try again.';
   else if (fd.get('_action') === 'resend') {
-    const r = await resendCode(db, loginId, ctx);
-    if (r.code) {
-      if (import.meta.env.DEV) console.log(`[DEV] login code for ${r.email}: ${r.code}`);
-      waitUntil(sendMail(db, env, codeMail(r.email, r.code), now));
-    }
+    issueCodeLater(db, () => resendCode(db, loginId, ctx), now);
     notice = 'If your email is approved for the preview, a new code is on its way. The previous code no longer works.';
   } else {
     const v = await verifyCode(db, loginId, String(fd.get('code') ?? '').replace(/\s/g, ''), ctx);

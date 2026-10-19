@@ -14,6 +14,8 @@ export const OTP = {
   REQUESTS_PER_IP_HOUR: 20,
   /** Resend free = 100 mails/day per account, shared with the contact form. */
   MAILS_PER_DAY: 60,
+  /** Owner notifications (sign-ups, upgrades, approvals) stop here, keeping the rest for login codes. */
+  OWNER_MAILS_UNTIL: 40,
 } as const;
 
 const enc = new TextEncoder();
@@ -84,6 +86,17 @@ export async function requestCode(db: D1Database, email: string, loginId: string
   if ((await countEvents(db, 'otp_sent', 'subject', email, now - OTP.RESEND_AFTER_S)) > 0) return { code: null, reason: 'too_soon' };
   if ((await countEvents(db, 'otp_sent', 'subject', email, now - 3600)) >= OTP.SENDS_PER_EMAIL_HOUR) return { code: null, reason: 'email_cap' };
   if ((await mailsToday(db, now)) >= OTP.MAILS_PER_DAY) return { code: null, reason: 'daily_cap' };
+  // Reserve the send slot atomically (D1 runs statements one at a time), so parallel posts
+  // can't all pass the read-only checks above.
+  const slot = await db
+    .prepare(
+      `INSERT INTO events (kind, subject, ip, at) SELECT 'otp_sent', ?1, ?2, ?3
+       WHERE (SELECT COUNT(*) FROM events WHERE kind = 'otp_sent' AND subject = ?1 AND at > ?4) = 0
+         AND (SELECT COUNT(*) FROM events WHERE kind = 'otp_sent' AND subject = ?1 AND at > ?5) < ?6`,
+    )
+    .bind(email, ip, now, now - OTP.RESEND_AFTER_S, now - 3600, OTP.SENDS_PER_EMAIL_HOUR)
+    .run();
+  if (slot.meta.changes !== 1) return { code: null, reason: 'too_soon' };
 
   const code = randomCode();
   await db.batch([
@@ -91,7 +104,6 @@ export async function requestCode(db: D1Database, email: string, loginId: string
     db
       .prepare('INSERT INTO otp_codes (login_id, email, code_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?)')
       .bind(loginId, email, await hmacHex(pepper, `${loginId}:${code}`), now, now + OTP.TTL_S),
-    logEvent(db, 'otp_sent', email, ip, now),
   ]);
   return { code, email };
 }
@@ -111,18 +123,29 @@ export async function verifyCode(db: D1Database, loginId: string, code: string, 
     .first<{ email: string; code_hash: string; expires_at: number }>();
   // Unknown login ids get their own failure counter, so they lock out exactly like real ones.
   const subject = row?.email ?? `lid:${loginId}`;
-  const fails = await countEvents(db, 'otp_fail', 'subject', subject, now - OTP.FAIL_WINDOW_S);
-  if (fails >= OTP.MAX_FAILS) return { ok: false, reason: 'locked' };
+  // Reserve a failure slot before comparing: atomic, so parallel guesses can't exceed MAX_FAILS.
+  // A correct code gives the slot back.
+  const slot = await db
+    .prepare(
+      `INSERT INTO events (kind, subject, ip, at) SELECT 'otp_fail', ?1, ?2, ?3
+       WHERE (SELECT COUNT(*) FROM events WHERE kind = 'otp_fail' AND subject = ?1 AND at > ?4) < ?5`,
+    )
+    .bind(subject, ip, now, now - OTP.FAIL_WINDOW_S, OTP.MAX_FAILS)
+    .run();
+  if (slot.meta.changes !== 1) return { ok: false, reason: 'locked' };
 
   const given = /^\d{6}$/.test(code) ? await hmacHex(pepper, `${loginId}:${code}`) : '';
   if (row && row.expires_at > now && safeEqual(given, row.code_hash)) {
     // changes === 1 makes the code single-use even under concurrent submits.
     const del = await db.prepare('DELETE FROM otp_codes WHERE login_id = ? AND code_hash = ?').bind(loginId, row.code_hash).run();
-    if (del.meta.changes === 1) return { ok: true, email: row.email };
+    if (del.meta.changes === 1) {
+      await db.prepare('DELETE FROM events WHERE id = ?').bind(slot.meta.last_row_id).run();
+      return { ok: true, email: row.email };
+    }
   }
-  await logEvent(db, 'otp_fail', subject, ip, now).run();
+  const fails = await countEvents(db, 'otp_fail', 'subject', subject, now - OTP.FAIL_WINDOW_S);
   // Keep the row on lockout: it ties this login id to the email's counter (it expires on its own).
-  return { ok: false, reason: fails + 1 >= OTP.MAX_FAILS ? 'locked' : 'invalid' };
+  return { ok: false, reason: fails >= OTP.MAX_FAILS ? 'locked' : 'invalid' };
 }
 
 /** Opportunistic cleanup (run after logins): expired codes and sessions, old events and rejected requests. */

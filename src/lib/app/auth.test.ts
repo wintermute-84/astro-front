@@ -161,12 +161,37 @@ test('sendMail: posts to Resend, respects daily cap, no key = skipped', async ()
   const db = testDb();
   const calls: RequestInit[] = [];
   const fake = (async (_u: string, init: RequestInit) => (calls.push(init), new Response('{}'))) as unknown as typeof fetch;
-  assert.equal(await sendMail(db, {}, { to: 'a@x.io', subject: 's', text: 't' }, T0, fake), false);
-  assert.equal(await sendMail(db, { RESEND_OTP_API_KEY: 'k' }, { to: 'a@x.io', subject: 's', text: 't' }, T0, fake), true);
+  assert.equal(await sendMail(db, {}, { to: 'a@x.io', subject: 's', text: 't' }, T0, undefined, fake), false);
+  assert.equal(await sendMail(db, { RESEND_OTP_API_KEY: 'k' }, { to: 'a@x.io', subject: 's', text: 't' }, T0, undefined, fake), true);
   const body = JSON.parse(String(calls[0].body));
   assert.equal(body.from, '3DreamLab <login@3dreamlab.com>');
   assert.deepEqual(body.to, ['a@x.io']);
   for (let i = 1; i < OTP.MAILS_PER_DAY; i++) await db.prepare("INSERT INTO events (kind, at) VALUES ('mail', ?)").bind(T0).run();
-  assert.equal(await sendMail(db, { RESEND_OTP_API_KEY: 'k' }, { to: 'a@x.io', subject: 's', text: 't' }, T0, fake), false, 'cap');
+  assert.equal(await sendMail(db, { RESEND_OTP_API_KEY: 'k' }, { to: 'a@x.io', subject: 's', text: 't' }, T0, undefined, fake), false, 'cap');
   assert.equal(calls.length, 1);
+});
+
+test('concurrency: parallel wrong guesses reserve at most 3 fail slots; parallel requests issue one code', async () => {
+  const db = testDb();
+  await allow(db, 'a@x.io');
+  const r = await requestCode(db, 'a@x.io', 'lid', ctx());
+  const wrong = r.code === '000000' ? '111111' : '000000';
+  const res = await Promise.all(Array.from({ length: 8 }, (_, i) => verifyCode(db, 'lid', wrong, ctx(T0 + 1 + i))));
+  assert.equal(await db.prepare("SELECT COUNT(*) AS n FROM events WHERE kind = 'otp_fail'").first('n'), 3);
+  assert.ok(res.every((x) => !x.ok));
+  assert.deepEqual(await verifyCode(db, 'lid', r.code!, ctx(T0 + 20)), { ok: false, reason: 'locked' });
+
+  const db2 = testDb();
+  await allow(db2, 'b@x.io');
+  const many = await Promise.all(Array.from({ length: 5 }, (_, i) => requestCode(db2, 'b@x.io', `l${i}`, ctx(T0))));
+  assert.equal(many.filter((x) => x.code).length, 1);
+  assert.equal(await db2.prepare("SELECT COUNT(*) AS n FROM events WHERE kind = 'otp_sent'").first('n'), 1);
+});
+
+test('a correct code gives its reserved fail slot back', async () => {
+  const db = testDb();
+  await allow(db, 'a@x.io');
+  const r = await requestCode(db, 'a@x.io', 'lid', ctx());
+  assert.equal((await verifyCode(db, 'lid', r.code!, ctx(T0 + 1))).ok, true);
+  assert.equal(await db.prepare("SELECT COUNT(*) AS n FROM events WHERE kind = 'otp_fail'").first('n'), 0);
 });

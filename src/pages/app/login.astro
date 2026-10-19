@@ -1,12 +1,12 @@
 ---
 // Step 1 of the email-code login. Whatever happens after the captcha, the answer is the
-// same redirect to /app/verify: it never reveals whether an email is on the preview list.
-import { env, waitUntil } from 'cloudflare:workers';
+// same redirect to /app/verify, sent before any allowlist work: it never reveals whether an
+// email is on the preview list.
+import { env } from 'cloudflare:workers';
 import Bare from '../../components/app/Bare.astro';
 import { normEmail, randomHex, requestCode } from '../../lib/app/otp';
 import { LOGIN_COOKIE, LOGIN_TTL_S, cookieOpts } from '../../lib/app/session';
-import { codeMail, sendMail } from '../../lib/app/mail';
-import { clientIp, nowS, otpIpAllowed, otpPepper, siteDb, verifyTurnstile } from '../../lib/app/site';
+import { clientIp, issueCodeLater, nowS, otpIpAllowed, otpPepper, siteDb, verifyTurnstile } from '../../lib/app/site';
 
 export const prerender = false;
 
@@ -23,13 +23,8 @@ if (Astro.request.method === 'POST') {
   else {
     const db = siteDb();
     const loginId = randomHex(16);
-    const now = nowS();
-    const r = await requestCode(db, norm, loginId, { pepper: otpPepper(), ip, now });
-    if (r.code) {
-      if (import.meta.env.DEV) console.log(`[DEV] login code for ${norm}: ${r.code}`);
-      // After the response, so timing doesn't tell allowlisted emails apart.
-      waitUntil(sendMail(db, env, codeMail(norm, r.code), now));
-    }
+    const ctx = { pepper: otpPepper(), ip, now: nowS() };
+    issueCodeLater(db, () => requestCode(db, norm, loginId, ctx), ctx.now);
     Astro.cookies.set(LOGIN_COOKIE, loginId, cookieOpts(LOGIN_TTL_S));
     return Astro.redirect('/app/verify', 303);
   }

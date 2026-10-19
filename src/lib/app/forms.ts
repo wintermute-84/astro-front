@@ -46,6 +46,14 @@ export function customerTestFromForm(fd: FormData): CustomerTestRequestInput {
   };
 }
 
+/**
+ * Test paths are appended to /t/<slug>; a "." or ".." segment (also %2e-encoded) would let URL
+ * normalization step into another tenant, so refuse them here too.
+ */
+export function isSafeTestPath(path: string): boolean {
+  return path.startsWith('/') && !path.includes('\\') && !path.split('/').some((seg) => /^(\.|%2e){1,2}$/i.test(seg));
+}
+
 /** Empty tags = whole project. */
 export function purgeFromForm(fd: FormData): { tags?: string[] } {
   const tags = list(str(fd, 'tags'));

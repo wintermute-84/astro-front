@@ -14,6 +14,7 @@ import { purgeFromForm, usageMeter } from '../../lib/app/forms';
 import { setAppFlash } from '../../lib/app/flash';
 import { ownerUpgradeMail, sendMail } from '../../lib/app/mail';
 import { nowS, siteDb } from '../../lib/app/site';
+import { OTP } from '../../lib/app/otp';
 import { OUTCOMES, RANGES, parseRange, utc } from '../../lib/dashboard/format';
 
 export const prerender = false;
@@ -49,7 +50,7 @@ if (Astro.request.method === 'POST' && project) {
       if (plan !== 'starter' && plan !== 'pro') break;
       const r = await crpc((api) => api.requestUpgrade(me.userId, slug, plan));
       if (r.ok) {
-        if (env.CONTACT_TO_EMAIL) waitUntil(sendMail(siteDb(), env, ownerUpgradeMail(env.CONTACT_TO_EMAIL, { email: me.email, slug, plan }, Astro.url.origin), nowS()));
+        if (env.CONTACT_TO_EMAIL) waitUntil(sendMail(siteDb(), env, ownerUpgradeMail(env.CONTACT_TO_EMAIL, { email: me.email, slug, plan }, Astro.url.origin), nowS(), OTP.OWNER_MAILS_UNTIL));
         flash('ok', `Upgrade to ${plan} requested. We'll email you an invoice; the plan changes once it's paid.`);
       } else flash('err', r.error);
       break;

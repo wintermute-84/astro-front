@@ -17,7 +17,7 @@ export function testDb(): D1Database {
     all: async () => ({ results: (db.prepare(sql).all(...(args as never[])) as object[]).map((r) => ({ ...r })), success: true, meta: {} }),
     run: async () => {
       const r = db.prepare(sql).run(...(args as never[]));
-      return { success: true, results: [], meta: { changes: Number(r.changes) } };
+      return { success: true, results: [], meta: { changes: Number(r.changes), last_row_id: Number(r.lastInsertRowid) } };
     },
   });
   return {
