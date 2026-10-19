@@ -1,16 +1,25 @@
 // /signup requests and the owner's approval (allowlist) in /dashboard/signups.
 import { countEvents, logEvent, normEmail, randomHex } from './otp.ts';
+import { PLANS as LIMITS } from './contract.ts';
 
 export const PLAN_IDS = ['free', 'starter', 'pro'] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
 export const isPlan = (p: unknown): p is PlanId => PLAN_IDS.includes(p as PlanId);
 
-/** Mirror of edge-cache PLANS (contract doc); used for copy and the site-side project cap. */
-export const PLANS: Record<PlanId, { label: string; price: string; perDay: number; projects: number; origins: number; rules: number; metricsDays: number; purgesPerDay: number; methods: string; support: string }> = {
-  free: { label: 'Free preview', price: '€0', perDay: 1000, projects: 1, origins: 1, rules: 3, metricsDays: 7, purgesPerDay: 3, methods: 'GET, HEAD', support: 'Docs' },
-  starter: { label: 'Starter', price: '€99/mo', perDay: 10000, projects: 1, origins: 3, rules: 10, metricsDays: 30, purgesPerDay: 200, methods: 'GET, HEAD, POST reads', support: 'Email, best effort' },
-  pro: { label: 'Pro', price: '€299/mo', perDay: 100000, projects: 3, origins: 10, rules: 30, metricsDays: 30, purgesPerDay: 1000, methods: 'GET, HEAD, POST reads', support: '1 business day' },
+const META: Record<PlanId, { label: string; price: string; support: string }> = {
+  free: { label: 'Free preview', price: '€0', support: 'Docs' },
+  starter: { label: 'Starter', price: '€99/mo', support: 'Email, best effort' },
+  pro: { label: 'Pro', price: '€299/mo', support: '1 business day' },
 };
+
+/** Tier copy for /signup: limits come from the edge-cache contract's PLANS. */
+export const PLANS = Object.fromEntries(
+  PLAN_IDS.map((id) => {
+    const l = LIMITS[id];
+    const methods = l.postRead ? 'GET, HEAD, POST reads' : 'GET, HEAD';
+    return [id, { ...META[id], perDay: l.dailyLimit, projects: l.projects, origins: l.origins, rules: l.rules, metricsDays: l.metricsDays, purgesPerDay: l.purgesPerDay, methods }];
+  }),
+) as Record<PlanId, (typeof META)[PlanId] & { perDay: number; projects: number; origins: number; rules: number; metricsDays: number; purgesPerDay: number; methods: string }>;
 
 export type SignupInput = { email: string; plan: PlanId; company: string | null; note: string | null };
 export type Parsed<T> = { ok: true; value: T } | { ok: false; error: string };

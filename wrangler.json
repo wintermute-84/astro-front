@@ -20,7 +20,10 @@
 	"d1_databases": [
 		{ "binding": "SITE_DB", "database_name": "site", "database_id": "49c6ea2d-c75d-433c-936f-d3b857b3d952", "migrations_dir": "migrations" }
 	],
-	"services": [{ "binding": "EDGE_CACHE", "service": "edge-cache", "entrypoint": "EdgeCacheRPC" }],
+	"services": [
+		{ "binding": "EDGE_CACHE", "service": "edge-cache", "entrypoint": "EdgeCacheRPC" },
+		{ "binding": "EDGE_CUSTOMER", "service": "edge-cache", "entrypoint": "EdgeCustomerRPC" }
+	],
 	"env": {
 		"dev": {
 			"name": "astro-front-dev",

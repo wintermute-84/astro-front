@@ -1,0 +1,62 @@
+---
+// C3: create a project (name + origin). The edge generates the slug, validates the origin (SSRF)
+// and starts the project as pending_verification.
+import Layout from '../../components/app/Layout.astro';
+import Field from '../../components/dashboard/Field.astro';
+import ErrorState from '../../components/dashboard/ErrorState.astro';
+import { crpc, saveVerification } from '../../lib/app/edge';
+import { canCreateProject, projectFromForm } from '../../lib/app/forms';
+import { allowlistPlan } from '../../lib/app/signup';
+import { setAppFlash } from '../../lib/app/flash';
+import { fieldOf } from '../../lib/dashboard/forms';
+import { siteDb } from '../../lib/app/site';
+
+export const prerender = false;
+
+const me = Astro.locals.customer!;
+const plan = await allowlistPlan(siteDb(), me.email);
+const mine = await crpc((api) => api.listMyProjects(me.userId));
+const allowed = mine.ok && canCreateProject(mine.data, plan);
+let error: string | null = null;
+let name = '';
+let originUrl = '';
+
+if (Astro.request.method === 'POST' && allowed) {
+  const fd = await Astro.request.formData();
+  const input = projectFromForm(fd, plan);
+  ({ name, originUrl } = input);
+  const r = await crpc((api) => api.createProject(me.userId, input));
+  if (r.ok) {
+    saveVerification(Astro.cookies, { slug: r.data.tenant.slug, originId: r.data.origin.id, v: r.data.verification });
+    setAppFlash(Astro.cookies, { kind: 'ok', message: `Created ${r.data.tenant.slug}. Prove you control the origin to switch it on.` });
+    return Astro.redirect(`/app?p=${encodeURIComponent(r.data.tenant.slug)}`, 303);
+  }
+  error = r.error;
+}
+const at = error ? fieldOf(error, ['name', 'originUrl']) ?? (/origin|url|host/i.test(error) ? 'originUrl' : null) : null;
+---
+
+<Layout title="New project">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">NEW PROJECT</h1>
+      <p class="page-sub">One API origin behind edge.3dreamlab.com. HTTPS only; you'll prove you control it next.</p>
+    </div>
+  </div>
+  {!mine.ok && <ErrorState title="Could not load your projects." message={mine.error} />}
+  {
+    mine.ok && !allowed && (
+      <div class="card"><div class="empty"><p>Your plan's project limit is reached. Delete a project in Settings, or request an upgrade on the overview.</p><a class="btn" href="/app">Back to overview</a></div></div>
+    )
+  }
+  {
+    allowed && (
+      <form class="card form-grid" method="post" style="max-width:640px">
+        {error && !at && <p class="f__error mono" data-server role="alert">{error}</p>}
+        <Field label="Project name" name="name" value={name} error={at === 'name' ? error : null} required maxlength="60" placeholder="Acme stock API" />
+        <Field label="Origin URL" name="originUrl" type="url" value={originUrl} error={at === 'originUrl' ? error : null} required pattern="https://.+" placeholder="https://api.example.com/v1" hint="Your API's base URL. Public HTTPS hosts only, no IP addresses." />
+        <div><button class="btn">Create project</button></div>
+      </form>
+    )
+  }
+</Layout>

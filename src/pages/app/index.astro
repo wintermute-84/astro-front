@@ -1,15 +1,300 @@
 ---
+// Console overview for the selected project: origin proof while pending, then usage, metrics
+// (clamped to the plan by the edge), upgrade request and purge.
+import { env, waitUntil } from 'cloudflare:workers';
 import Layout from '../../components/app/Layout.astro';
+import Kpi from '../../components/dashboard/Kpi.astro';
+import ChartCard from '../../components/dashboard/ChartCard.astro';
+import ErrorState from '../../components/dashboard/ErrorState.astro';
+import ConfirmDialog from '../../components/dashboard/ConfirmDialog.astro';
+import Chart, { type ChartSeries } from '../../components/dashboard/Chart.tsx';
+import { PLANS, type Outcome, type Plan } from '../../lib/app/contract';
+import { crpc, currentProject, readVerification, saveVerification } from '../../lib/app/edge';
+import { purgeFromForm, usageMeter } from '../../lib/app/forms';
+import { setAppFlash } from '../../lib/app/flash';
+import { ownerUpgradeMail, sendMail } from '../../lib/app/mail';
+import { nowS, siteDb } from '../../lib/app/site';
+import { OUTCOMES, RANGES, parseRange, utc } from '../../lib/dashboard/format';
 
 export const prerender = false;
+
 const me = Astro.locals.customer!;
+const cur = await currentProject(me.userId, Astro.url);
+const project = cur.ok ? cur.data.project : null;
+const here = project ? `/app?p=${encodeURIComponent(project.slug)}` : '/app';
+
+if (Astro.request.method === 'POST' && project) {
+  const fd = await Astro.request.formData();
+  const slug = project.slug; // from listMyProjects, never from the form
+  const originId = String(fd.get('originId') ?? '');
+  const flash = (kind: 'ok' | 'err', message: string) => setAppFlash(Astro.cookies, { kind, message });
+  switch (fd.get('_action')) {
+    case 'verify': {
+      const r = await crpc((api) => api.verifyOrigin(me.userId, slug, originId));
+      if (!r.ok) flash('err', `Check failed: ${r.error}`);
+      else if (r.data.verified) flash('ok', `Origin verified via ${r.data.method === 'dns' ? 'DNS TXT record' : 'well-known file'}. ${slug} is live.`);
+      else flash('err', `Not verified yet${r.data.detail ? ` (${r.data.detail})` : ''}. DNS changes can take a few minutes.`);
+      break;
+    }
+    case 'newtoken': {
+      const r = await crpc((api) => api.newVerification(me.userId, slug, originId));
+      if (r.ok) {
+        saveVerification(Astro.cookies, { slug, originId, v: r.data });
+        flash('ok', 'New verification token issued. The old one no longer works.');
+      } else flash('err', r.error);
+      break;
+    }
+    case 'upgrade': {
+      const plan = String(fd.get('plan'));
+      if (plan !== 'starter' && plan !== 'pro') break;
+      const r = await crpc((api) => api.requestUpgrade(me.userId, slug, plan));
+      if (r.ok) {
+        if (env.CONTACT_TO_EMAIL) waitUntil(sendMail(siteDb(), env, ownerUpgradeMail(env.CONTACT_TO_EMAIL, { email: me.email, slug, plan }, Astro.url.origin), nowS()));
+        flash('ok', `Upgrade to ${plan} requested. We'll email you an invoice; the plan changes once it's paid.`);
+      } else flash('err', r.error);
+      break;
+    }
+    case 'purge': {
+      if (String(fd.get('confirm') ?? '').trim() !== slug) flash('err', `Purge cancelled: type ${slug} to confirm.`);
+      else {
+        const r = await crpc((api) => api.purge(me.userId, slug, purgeFromForm(fd)));
+        if (!r.ok) flash('err', `Purge rejected: ${r.error}`);
+        else if (r.data.result === 'ERR') flash('err', `Purge failed: ${r.data.detail ?? 'unknown error'}.`);
+        else flash('ok', `Purged ${r.data.tags.join(', ')}.`);
+      }
+      break;
+    }
+  }
+  return Astro.redirect(here, 303);
+}
+
+const range = parseRange(Astro.url.searchParams.get('range'));
+const detail = project ? await crpc((api) => api.getProject(me.userId, project.slug)) : null;
+const d = detail?.ok ? detail.data : null;
+const active = d?.tenant.status === 'active';
+const pendingOrigin = d?.origins.find((o) => !o.verifiedAt) ?? null;
+const verification = d && pendingOrigin ? readVerification(Astro.cookies, d.tenant.slug, pendingOrigin.id) : null;
+const ov = d && active ? await crpc((api) => api.overview(me.userId, d.tenant.slug, range)) : null;
+const o = ov?.ok ? ov.data : null;
+const live = o?.available === true;
+const limits = d ? PLANS[d.tenant.plan] : null;
+const meter = d ? usageMeter(d.usage.today, d.usage.limit) : null;
+const fmt = (n: number) => n.toLocaleString('en');
+const upgrades = (['starter', 'pro'] as const).filter((p) => d && PLANS[p].dailyLimit > PLANS[d.tenant.plan].dailyLimit);
+const allowedRanges = limits ? RANGES.filter((r) => (r === '30d' ? limits.metricsDays >= 30 : r === '7d' ? limits.metricsDays >= 7 : true)) : [];
+
+const COLORS: Record<Outcome, string> = { HIT: '#ff2400', MISS: '#3987e5', STALE: '#c98500', 'STALE-ERROR': '#9085e9', BYPASS: '#888' };
+const hit: ChartSeries[] = o ? [{ label: 'HIT RATIO', values: o.hitRatio, color: COLORS.HIT }] : [];
+const outcomes: ChartSeries[] = o ? OUTCOMES.map((k) => ({ label: k, values: o.outcomes[k], color: COLORS[k], hatch: k === 'BYPASS' })) : [];
+const kpis = (o?.kpis ?? []).map((k) => (live ? k : { ...k, value: '—', spark: undefined, delta: { dir: 'flat' as const, text: 'no data yet', good: true } }));
+const pct = (v: number | undefined) => `${((v ?? 0) * 100).toFixed(1)}%`;
+const when = (s: number) => utc(s).slice(5, 16);
+const planLabel = (p: Plan) => p.toUpperCase();
 ---
 
-<Layout title="Overview">
+<Layout title="Overview" slug={project?.slug}>
   <div class="page-head">
     <div>
-      <h1 class="page-title">YOU'RE IN.</h1>
-      <p class="page-sub">Logged in as {me.email}. Project setup opens here shortly; we'll email you when it does.</p>
+      <h1 class="page-title">{d ? d.tenant.name.toUpperCase() : 'OVERVIEW'}</h1>
+      {
+        d && (
+          <p class="page-sub">
+            <span class="mono">{d.tenant.slug}</span> · {planLabel(d.tenant.plan)} ·{' '}
+            <b class={`mono status--${d.tenant.status === 'active' ? 'ok' : d.tenant.status === 'suspended' ? 'err' : 'warn'}`}>{d.tenant.status.replace('_', ' ').toUpperCase()}</b>
+            {active && <> · Base URL <span class="mono">https://edge.3dreamlab.com/t/{d.tenant.slug}/</span></>}
+          </p>
+        )
+      }
     </div>
+    {
+      cur.ok && cur.data.projects.length > 1 && (
+        <nav class="tabs mono" aria-label="Project">
+          {cur.data.projects.map((p) => <a href={`/app?p=${encodeURIComponent(p.slug)}`} aria-current={p.slug === project?.slug ? 'true' : undefined}>{p.slug}</a>)}
+        </nav>
+      )
+    }
   </div>
+
+  {!cur.ok && <ErrorState title="Could not load your projects." message={cur.error} />}
+  {detail && !detail.ok && <ErrorState title="Could not load this project." message={detail.error} />}
+  {
+    cur.ok && !project && (
+      <div class="card">
+        <div class="empty">
+          <p>No project yet. Put the edge in front of one API origin: you'll get a cache URL, rules, purge and usage.</p>
+          <a class="btn" href="/app/new">Create project</a>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    d && d.tenant.status === 'suspended' && (
+      <p class="card mono" role="status"><b class="status--err">ERR</b> This project is suspended. Reply to any of our emails or write to contact@3dreamlab.com.</p>
+    )
+  }
+
+  {
+    d && pendingOrigin && (
+      <section class="card verify" aria-labelledby="verify-title">
+        <div class="card__head"><h2 class="label card__title" id="verify-title">Prove you control the origin</h2></div>
+        <p>
+          The project serves nothing until <span class="mono">{pendingOrigin.baseUrl}</span> is verified. Use <b>one</b> of these, then press Check now.
+        </p>
+        {
+          verification ? (
+            <dl class="kv mono verify__kv">
+              <dt>DNS TXT name</dt>
+              <dd><code>{verification.dnsTxtName}</code><button type="button" class="btn btn--outline copy" data-copy={verification.dnsTxtName}>Copy</button></dd>
+              <dt>DNS TXT value</dt>
+              <dd><code>{verification.dnsTxtValue}</code><button type="button" class="btn btn--outline copy" data-copy={verification.dnsTxtValue}>Copy</button></dd>
+              <dt>Or serve file</dt>
+              <dd><code>{verification.wellKnownUrl}</code><button type="button" class="btn btn--outline copy" data-copy={verification.wellKnownUrl}>Copy</button></dd>
+              <dt>With body</dt>
+              <dd><code>{verification.wellKnownBody}</code><button type="button" class="btn btn--outline copy" data-copy={verification.wellKnownBody}>Copy</button></dd>
+            </dl>
+          ) : (
+            <p class="mono dim">The token is only shown once and isn't stored in this browser. Get a new one (the old one stops working).</p>
+          )
+        }
+        <div class="verify__actions">
+          <form method="post" action={here}>
+            <input type="hidden" name="originId" value={pendingOrigin.id} />
+            <button class="btn" name="_action" value="verify">Check now</button>
+          </form>
+          <form method="post" action={here}>
+            <input type="hidden" name="originId" value={pendingOrigin.id} />
+            <button class="btn btn--outline" name="_action" value="newtoken">{verification ? 'New token' : 'Get token'}</button>
+          </form>
+        </div>
+        <p class="copy-status mono dim" aria-live="polite"></p>
+      </section>
+    )
+  }
+
+  {
+    d && meter && limits && (
+      <div class="grid">
+        <section class="card span-8" aria-labelledby="usage-title">
+          <div class="card__head">
+            <h2 class="label card__title" id="usage-title">Requests today</h2>
+            <p class="card__stats mono" style="margin:0">resets {d.usage.resetAt.slice(11, 16)} UTC</p>
+          </div>
+          <p class="usage__num"><b class="num">{fmt(d.usage.today)}</b> <span class="dim">/ {fmt(d.usage.limit)}</span></p>
+          <div class={`usage__bar usage__bar--${meter.tone}`} role="meter" aria-labelledby="usage-title" aria-valuemin="0" aria-valuemax={d.usage.limit} aria-valuenow={Math.min(d.usage.today, d.usage.limit)} aria-valuetext={`${fmt(d.usage.today)} of ${fmt(d.usage.limit)} requests (${meter.pct}%)`}>
+            <span style={`width:${meter.pct}%`}></span>
+          </div>
+          <p class="mono dim">
+            {meter.tone === 'err' ? <><b class="status--err">ERR</b> Limit reached: the edge answers 429 until the reset. Your own API is unaffected.</> : meter.tone === 'warn' ? <><b class="status--warn">WARN</b> Over 80% of today's limit.</> : `${meter.pct}% used`}
+          </p>
+        </section>
+        <section class="card span-4" aria-labelledby="plan-title">
+          <div class="card__head"><h2 class="label card__title" id="plan-title">Plan · {planLabel(d.tenant.plan)}</h2></div>
+          <ul class="plan mono">
+            <li>{fmt(d.tenant.dailyLimit)} requests/day</li>
+            <li>{limits.origins} origin{limits.origins > 1 && 's'} · {limits.rules} rules</li>
+            <li>{limits.purgesPerDay} purges/day · {limits.metricsDays}-day metrics</li>
+            <li>{limits.postRead ? 'GET, HEAD, POST reads' : 'GET and HEAD'}</li>
+          </ul>
+          {d.tenant.upgradeRequestedPlan && <p class="mono"><b class="status--warn">PENDING</b> Upgrade to {d.tenant.upgradeRequestedPlan} requested.</p>}
+          {
+            !d.tenant.upgradeRequestedPlan && upgrades.length > 0 && (
+              <form method="post" action={here} class="plan__up">
+                {upgrades.map((p) => <button class="btn btn--outline" name="plan" value={p}>Request {p} ({p === 'starter' ? '€99' : '€299'}/mo)</button>)}
+                <input type="hidden" name="_action" value="upgrade" />
+              </form>
+            )
+          }
+          {!d.tenant.upgradeRequestedPlan && upgrades.length > 0 && <p class="f__hint mono">Manual invoice, nothing is charged here.</p>}
+        </section>
+      </div>
+    )
+  }
+
+  {
+    d && active && (
+      <>
+        <div class="page-head" style="margin-top:8px">
+          <h2 class="label">Metrics</h2>
+          <nav class="segmented mono" aria-label="Time range">
+            {allowedRanges.map((r) => <a href={`${here}&range=${r}`} aria-current={r === (o?.range ?? range) ? 'true' : undefined}>{r.toUpperCase()}</a>)}
+          </nav>
+        </div>
+        {ov && !ov.ok && <ErrorState title="Could not load metrics." message={ov.error} />}
+        {o && !live && <p class="card mono" role="status" style="margin:0 0 16px">No metrics yet. They appear after the first requests through the edge.</p>}
+        {o && <div class="grid">{kpis.map((k) => <div class="span-3"><Kpi kpi={k} /></div>)}</div>}
+        {
+          o && live && (
+            <div class="grid">
+              <ChartCard class="span-4" title="Hit ratio" stats={[['now', pct(o.hitRatio.at(-1))]]}>
+                <Chart client:visible kind="line" t={o.t} series={hit} unit="%" label={`Hit ratio, last ${o.range}`} />
+                <table class="table" slot="table">
+                  <thead><tr><th>Time UTC</th><th class="r">Hit ratio</th></tr></thead>
+                  <tbody>{o.t.map((t, i) => <tr><td class="mono">{when(t)}</td><td class="r">{pct(o.hitRatio[i])}</td></tr>)}</tbody>
+                </table>
+              </ChartCard>
+              <ChartCard class="span-8" title="Outcomes per bucket">
+                <Chart client:visible kind="stacked" t={o.t} series={outcomes} unit="" label={`Requests per cache outcome, last ${o.range}`} />
+                <table class="table" slot="table">
+                  <thead><tr><th>Time UTC</th>{OUTCOMES.map((k) => <th class="r">{k}</th>)}</tr></thead>
+                  <tbody>{o.t.map((t, i) => <tr><td class="mono">{when(t)}</td>{OUTCOMES.map((k) => <td class="r">{o.outcomes[k][i].toLocaleString('en')}</td>)}</tr>)}</tbody>
+                </table>
+              </ChartCard>
+            </div>
+          )
+        }
+
+        <section class="card">
+          <div class="card__head"><h2 class="label card__title">Purge</h2></div>
+          <p>Drop cached responses in every data center; the next requests go to your origin. {limits?.purgesPerDay} per day on your plan.</p>
+          <button type="button" class="btn btn--danger" commandfor="purge-confirm" command="show-modal">Purge {d.tenant.slug}…</button>
+        </section>
+        <ConfirmDialog id="purge-confirm" title={`Purge ${d.tenant.slug}`} confirmValue={d.tenant.slug} action={here} submitLabel="Purge">
+          <p>Removes cached responses for <b>{d.tenant.slug}</b>.</p>
+          <Fragment slot="fields">
+            <input type="hidden" name="_action" value="purge" />
+            <label class="f">
+              <span class="f__label label">Tags (empty = everything)</span>
+              <input class="f__input mono" name="tags" autocomplete="off" placeholder="stock, prices" />
+            </label>
+          </Fragment>
+        </ConfirmDialog>
+      </>
+    )
+  }
 </Layout>
+
+<style>
+  .verify p { margin: 0 0 12px; }
+  .dim { color: var(--text-3); }
+  .kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 20px; margin: 0; }
+  .kv dt { color: var(--text-3); text-transform: uppercase; }
+  .kv dd { margin: 0; color: var(--text-1); }
+  @media (max-width: 600px) { .kv { grid-template-columns: minmax(0, 1fr); gap: 4px; } .kv dd { margin-bottom: 10px; } }
+  .verify__kv dd { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .verify__kv code { overflow-wrap: anywhere; color: var(--text-1); }
+  .verify__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .copy { padding: 4px 10px; min-height: 32px; }
+  .usage__num { margin: 4px 0 10px; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+  .usage__bar { height: 10px; background: var(--surface-2); margin-bottom: 10px; }
+  .usage__bar span { display: block; height: 100%; background: var(--text-1); }
+  .usage__bar--warn span { background: var(--c-stale, #c98500); }
+  .usage__bar--err span { background: var(--red); }
+  .plan { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; }
+  .plan__up { display: flex; flex-wrap: wrap; gap: 8px; }
+</style>
+
+<script>
+  // Copy buttons for the verification values; text stays selectable without JS.
+  const status = document.querySelector('.copy-status');
+  document.querySelectorAll<HTMLButtonElement>('button[data-copy]').forEach((b) =>
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy ?? '');
+        if (status) status.textContent = 'Copied.';
+      } catch {
+        if (status) status.textContent = 'Copy failed: select the text instead.';
+      }
+    }),
+  );
+</script>

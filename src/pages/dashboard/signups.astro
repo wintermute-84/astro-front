@@ -2,7 +2,7 @@
 // Owner: preview requests → allowlist. Behind Cloudflare Access like all of /dashboard.
 import { env } from 'cloudflare:workers';
 import Layout from '../../components/dashboard/Layout.astro';
-import { setFlash } from '../../lib/dashboard/edge';
+import { rpc, setFlash } from '../../lib/dashboard/edge';
 import { PLAN_IDS, approveRequest, isPlan, listAllowlist, listSignupRequests, rejectRequest } from '../../lib/app/signup';
 import { approvedMail, sendMail } from '../../lib/app/mail';
 import { nowS, siteDb } from '../../lib/app/site';
@@ -25,6 +25,17 @@ if (Astro.request.method === 'POST') {
   } else if (action === 'reject') {
     const ok = await rejectRequest(db, id, now);
     setFlash(Astro.cookies, ok ? { kind: 'ok', message: 'Rejected. No email sent.' } : { kind: 'err', message: 'Request not found or already decided.' });
+  } else if (action === 'plan') {
+    const slug = String(fd.get('slug') ?? '');
+    const plan = String(fd.get('plan'));
+    const raw = String(fd.get('dailyLimit') ?? '').trim();
+    const r = isPlan(plan) ? await rpc((api) => api.setPlan(slug, plan, raw === '' ? null : Number(raw))) : null;
+    setFlash(Astro.cookies, r?.ok ? { kind: 'ok', message: `${slug}: plan ${plan}, ${r.data.dailyLimit.toLocaleString('en')} requests/day.` } : { kind: 'err', message: `Plan not changed: ${r ? (r.ok ? '' : r.error) : 'bad plan'}` });
+  } else if (action === 'status') {
+    const slug = String(fd.get('slug') ?? '');
+    const status = fd.get('status') === 'suspended' ? 'suspended' : 'active';
+    const r = await rpc((api) => api.setStatus(slug, status));
+    setFlash(Astro.cookies, r.ok ? { kind: 'ok', message: `${slug} is now ${r.data.status}.` } : { kind: 'err', message: `Status not changed: ${r.error}` });
   } else if (action === 'revoke') {
     const email = String(fd.get('email') ?? '');
     await db.prepare('DELETE FROM preview_allowlist WHERE email = ?').bind(email).run();
@@ -37,6 +48,8 @@ const requests = await listSignupRequests(db);
 const pending = requests.filter((r) => r.status === 'pending');
 const decided = requests.filter((r) => r.status !== 'pending').slice(0, 30);
 const allow = await listAllowlist(db);
+const tenants = await rpc((api) => api.listTenants());
+const customers = tenants.ok ? tenants.data.filter((t) => t.kind === 'customer') : [];
 const when = (s: number) => new Date(s * 1000).toISOString().slice(0, 16).replace('T', ' ');
 ---
 
@@ -103,6 +116,50 @@ const when = (s: number) => new Date(s * 1000).toISOString().slice(0, 16).replac
                     <form method="post">
                       <input type="hidden" name="email" value={a.email} />
                       <button class="btn btn--outline" name="_action" value="revoke">Remove</button>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+    }
+  </section>
+
+  <section class="card">
+    <div class="card__head"><h2 class="label card__title">Customer projects · {customers.length}</h2></div>
+    {!tenants.ok && <p class="mono"><b class="status--err">ERR</b> {tenants.error}</p>}
+    {tenants.ok && customers.length === 0 && <div class="empty"><p>No customer projects yet.</p></div>}
+    {
+      customers.length > 0 && (
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th scope="col">Project</th><th scope="col">Status</th><th scope="col">Plan · limit</th><th scope="col">Upgrade asked</th><th scope="col">Set plan</th><th scope="col"><span class="sr-only">Status action</span></th></tr></thead>
+            <tbody>
+              {customers.map((t) => (
+                <tr>
+                  <td class="mono"><a class="link" href={`/dashboard/tenants/${t.slug}`}>{t.slug}</a></td>
+                  <td class={`mono status--${t.status === 'active' ? 'ok' : t.status === 'suspended' ? 'err' : 'warn'}`}>{t.status.toUpperCase()}</td>
+                  <td class="mono">{t.plan} · {t.dailyLimit.toLocaleString('en')}/day</td>
+                  <td class="mono">{t.upgradeRequestedPlan ? <b class="status--warn">{t.upgradeRequestedPlan}</b> : '—'}</td>
+                  <td>
+                    <form method="post" class="row-actions">
+                      <input type="hidden" name="slug" value={t.slug} />
+                      <label class="sr-only" for={`p-${t.slug}`}>Plan for {t.slug}</label>
+                      <select class="f__input mono" id={`p-${t.slug}`} name="plan">
+                        {PLAN_IDS.map((p) => <option selected={p === (t.upgradeRequestedPlan ?? t.plan)}>{p}</option>)}
+                      </select>
+                      <label class="sr-only" for={`l-${t.slug}`}>Daily limit override for {t.slug}</label>
+                      <input class="f__input mono" id={`l-${t.slug}`} name="dailyLimit" type="number" min="0" placeholder="plan default" style="width:9rem" />
+                      <button class="btn" name="_action" value="plan">Set</button>
+                    </form>
+                  </td>
+                  <td>
+                    <form method="post">
+                      <input type="hidden" name="slug" value={t.slug} />
+                      <input type="hidden" name="status" value={t.status === 'suspended' ? 'active' : 'suspended'} />
+                      <button class="btn btn--outline" name="_action" value="status">{t.status === 'suspended' ? 'Unsuspend' : 'Suspend'}</button>
                     </form>
                   </td>
                 </tr>

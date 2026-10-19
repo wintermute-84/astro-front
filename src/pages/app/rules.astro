@@ -1,0 +1,146 @@
+---
+// Cache rules for the user's own project. Free: GET (HEAD is served from GET rules); paid: POST reads too.
+import Layout from '../../components/app/Layout.astro';
+import Field from '../../components/dashboard/Field.astro';
+import ErrorState from '../../components/dashboard/ErrorState.astro';
+import { PLANS, maxStaleness, type RuleInputCustomer } from '../../lib/app/contract';
+import { crpc, currentProject } from '../../lib/app/edge';
+import { customerRuleFromForm } from '../../lib/app/forms';
+import { setAppFlash } from '../../lib/app/flash';
+import { fieldOf } from '../../lib/dashboard/forms';
+import { formatDuration } from '../../lib/dashboard/format';
+
+export const prerender = false;
+
+const me = Astro.locals.customer!;
+const cur = await currentProject(me.userId, Astro.url);
+const project = cur.ok ? cur.data.project : null;
+if (cur.ok && !project) return Astro.redirect('/app', 303);
+const q = project ? `?p=${encodeURIComponent(project.slug)}` : '';
+const FIELDS = ['originId', 'method', 'pathPattern', 'ttlS', 'swrS', 'staleIfErrorS', 'vary', 'tags'] as const;
+let input: RuleInputCustomer | null = null;
+let error: string | null = null;
+
+if (Astro.request.method === 'POST' && project) {
+  const fd = await Astro.request.formData();
+  const slug = project.slug;
+  if (fd.get('_action') === 'delete') {
+    const id = String(fd.get('id') ?? '');
+    const r = await crpc((api) => api.deleteRule(me.userId, slug, id));
+    setAppFlash(Astro.cookies, r.ok ? { kind: 'ok', message: 'Rule deleted.' } : { kind: 'err', message: `Delete failed: ${r.error}` });
+    return Astro.redirect(`/app/rules${q}`, 303);
+  }
+  input = customerRuleFromForm(fd);
+  const r = await crpc((api) => api.upsertRule(me.userId, slug, input!));
+  if (r.ok) {
+    setAppFlash(Astro.cookies, { kind: 'ok', message: `${input.id ? 'Saved' : 'Added'} rule ${r.data.method} ${r.data.pathPattern}.` });
+    return Astro.redirect(`/app/rules${q}`, 303);
+  }
+  error = r.error;
+}
+
+const detail = project ? await crpc((api) => api.getProject(me.userId, project.slug)) : null;
+const d = detail?.ok ? detail.data : null;
+const limits = d ? PLANS[d.tenant.plan] : null;
+const editId = Astro.url.searchParams.get('edit');
+const editing = d?.rules.find((r) => r.id === editId) ?? null;
+const r = input ?? editing;
+const atLimit = !!d && !!limits && d.rules.length >= limits.rules && !editing && !input?.id;
+const at = error ? fieldOf(error, FIELDS) : null;
+const err = (f: string) => (at === f ? error : null);
+const methods = limits?.postRead ? ['GET', 'POST'] : ['GET'];
+---
+
+<Layout title="Rules" slug={project?.slug}>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">RULES</h1>
+      <p class="page-sub">What the edge caches and for how long. {limits && `${d!.rules.length} of ${limits.rules} on your plan.`} Unmatched paths get 404.</p>
+    </div>
+  </div>
+  {!cur.ok && <ErrorState title="Could not load your projects." message={cur.error} />}
+  {detail && !detail.ok && <ErrorState title="Could not load rules." message={detail.error} />}
+
+  {
+    d && (
+      <section class="card">
+        {d.rules.length === 0 && <div class="empty"><p>No rules yet: nothing is cached. Add the first rule below.</p></div>}
+        {
+          d.rules.length > 0 && (
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr><th scope="col">Method</th><th scope="col">Path</th><th scope="col" class="r">TTL</th><th scope="col" class="r">Max staleness</th><th scope="col">Vary</th><th scope="col">Tags</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Actions</span></th></tr>
+                </thead>
+                <tbody>
+                  {d.rules.map((x) => (
+                    <tr>
+                      <td class="mono">{x.method}</td>
+                      <td class="mono">{x.pathPattern}</td>
+                      <td class="r">{formatDuration(x.ttlS)}</td>
+                      <td class="r">{formatDuration(maxStaleness(x).outage)}</td>
+                      <td class="mono">{x.vary.join(', ') || '—'}</td>
+                      <td class="mono">{x.tags.join(', ') || '—'}</td>
+                      <td class={`mono status--${x.enabled ? 'ok' : 'warn'}`}>{x.enabled ? 'ON' : 'OFF'}</td>
+                      <td>
+                        <div class="row-actions">
+                          <a class="link mono" href={`/app/rules${q}&edit=${encodeURIComponent(x.id)}#rule-form`}>EDIT</a>
+                          <a class="link mono" href={`/app/test${q}&path=${encodeURIComponent(x.pathPattern.replaceAll('*', 'x'))}`}>TEST</a>
+                          <form method="post"><input type="hidden" name="id" value={x.id} /><button class="link mono" name="_action" value="delete" aria-label={`Delete rule ${x.method} ${x.pathPattern}`}>DELETE</button></form>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        }
+      </section>
+    )
+  }
+
+  {d && atLimit && <p class="card mono" role="status"><b class="status--warn">WARN</b> Rule limit reached for your plan. Delete a rule or request an upgrade.</p>}
+  {
+    d && !atLimit && (
+      <form class="card form-grid" method="post" id="rule-form" style="max-width:640px">
+        <h2 class="label card__title">{r?.id ? `Edit rule` : 'Add rule'}</h2>
+        {error && !at && <p class="f__error mono" data-server role="alert">{error}</p>}
+        {r?.id && <input type="hidden" name="id" value={r.id} />}
+        <div class="f">
+          <label class="f__label label" for="f-originId">Origin</label>
+          <select class="f__input mono" id="f-originId" name="originId" required>
+            {d.origins.map((o) => <option value={o.id} selected={o.id === r?.originId}>{o.baseUrl}</option>)}
+          </select>
+          {err('originId') && <p class="f__error mono" data-server>{error}</p>}
+        </div>
+        <div class="f">
+          <label class="f__label label" for="f-method">Method</label>
+          <select class="f__input mono" id="f-method" name="method">
+            {methods.map((m) => <option selected={m === r?.method}>{m}</option>)}
+          </select>
+          <p class="f__hint mono">{limits?.postRead ? 'POST rules cache read-only lookups (JSON body in the key).' : 'HEAD is answered from GET rules. POST reads: Starter and Pro.'}</p>
+          {err('method') && <p class="f__error mono" data-server>{error}</p>}
+        </div>
+        <Field label="Path pattern" name="pathPattern" value={r?.pathPattern} error={err('pathPattern')} required pattern="/[A-Za-z0-9._~\-\/*]*" placeholder="/v1/stock/*" hint="Path under your origin; * = one segment." />
+        <Field label="TTL seconds" name="ttlS" type="number" min="1" max="604800" value={r?.ttlS ?? 60} error={err('ttlS')} required />
+        <Field label="SWR seconds" name="swrS" type="number" min="0" max="604800" value={r?.swrS ?? 0} error={err('swrS')} required hint="Serve stale while refreshing in the background." />
+        <Field label="Stale-if-error seconds" name="staleIfErrorS" type="number" min="0" max="2592000" value={r?.staleIfErrorS ?? 0} error={err('staleIfErrorS')} required hint="Serve stale while your origin is down." />
+        <Field label="Vary" name="vary" value={r?.vary?.join(', ')} error={err('vary')} placeholder="query:sku" hint="query:<name> or header:<name>; only listed query params reach your origin." />
+        <Field label="Tags" name="tags" value={r?.tags?.join(', ')} error={err('tags')} placeholder="stock" hint="For purging by tag. a-z, 0-9, _ and -." />
+        <label class="f__row"><input type="checkbox" role="switch" class="switch" name="enabled" checked={r ? r.enabled !== false : true} /><span>Enabled</span></label>
+        <div class="row-actions">
+          <button class="btn">{r?.id ? 'Save rule' : 'Add rule'}</button>
+          {r?.id && <a class="link mono" href={`/app/rules${q}`}>CANCEL</a>}
+        </div>
+      </form>
+    )
+  }
+</Layout>
+
+<style>
+  .row-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .row-actions form { display: contents; }
+  button.link { background: none; border: 0; padding: 0; color: var(--text-1); cursor: pointer; text-decoration: underline; font: inherit; }
+  .card + .card, .card + form, .card + p { margin-top: 16px; }
+</style>

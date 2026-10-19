@@ -1,0 +1,79 @@
+---
+// One GET/HEAD through the edge with the project's live rules. No custom headers or bodies.
+import Layout from '../../components/app/Layout.astro';
+import Field from '../../components/dashboard/Field.astro';
+import Badge from '../../components/dashboard/Badge.astro';
+import ErrorState from '../../components/dashboard/ErrorState.astro';
+import { crpc, currentProject } from '../../lib/app/edge';
+import { customerTestFromForm } from '../../lib/app/forms';
+import type { CustomerTestRequestResult } from '../../lib/app/contract';
+import type { Result } from '../../lib/dashboard/edge';
+
+export const prerender = false;
+
+const me = Astro.locals.customer!;
+const cur = await currentProject(me.userId, Astro.url);
+const project = cur.ok ? cur.data.project : null;
+if (cur.ok && !project) return Astro.redirect('/app', 303);
+
+const fd = Astro.request.method === 'POST' ? await Astro.request.formData() : new URLSearchParams(Astro.url.search);
+const v = (k: string) => String(fd.get(k) ?? '');
+let result: Result<CustomerTestRequestResult> | null = null;
+if (Astro.request.method === 'POST' && project) {
+  const input = customerTestFromForm(fd as FormData);
+  result = await crpc((api) => api.testRequest(me.userId, project.slug, input));
+}
+---
+
+<Layout title="Test request" slug={project?.slug}>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">TEST REQUEST</h1>
+      <p class="page-sub">Sends one request through the edge with your live rules. Send twice to see MISS, then HIT. Counts toward today's requests.</p>
+    </div>
+  </div>
+  {!cur.ok && <ErrorState title="Could not load your projects." message={cur.error} />}
+  {
+    project && project.status !== 'active' && (
+      <p class="card mono" role="status"><b class="status--warn">WARN</b> The project isn't live yet: verify your origin on the <a class="link" href={`/app?p=${encodeURIComponent(project.slug)}`}>overview</a> first.</p>
+    )
+  }
+  <div class="grid">
+    <form class="card form-grid span-6" method="post">
+      <div class="f">
+        <label class="f__label label" for="f-method">Method</label>
+        <select class="f__input mono" id="f-method" name="method">
+          {['GET', 'HEAD'].map((m) => <option selected={m === v('method')}>{m}</option>)}
+        </select>
+      </div>
+      <Field label="Path" name="path" value={v('path')} required pattern="/[^?#]*" placeholder="/v1/stock/123" />
+      <Field label="Query" name="query" value={v('query')} placeholder="sku=SKU-1" />
+      <div><button class="btn">Send</button></div>
+    </form>
+
+    <section class="card span-6" aria-live="polite">
+      <div class="card__head"><h2 class="label card__title">Result</h2></div>
+      {!result && <div class="empty"><p>Send a request to see the cache key, outcome and timings.</p></div>}
+      {result && !result.ok && <p class="f__error mono" data-server role="alert">{result.error}</p>}
+      {
+        result?.ok && (
+          <dl class="kv mono">
+            <dt>Outcome</dt>
+            <dd>{result.data.outcome === 'QUOTA' ? <b class="status--err">QUOTA · daily limit used up</b> : <Badge outcome={result.data.outcome} />}</dd>
+            <dt>Status</dt><dd>{result.data.status}</dd>
+            <dt>Total</dt><dd>{result.data.totalMs} ms</dd>
+            <dt>Origin</dt><dd>{result.data.originMs ? `${result.data.originMs} ms` : 'not called'}</dd>
+            <dt>Key</dt><dd class="kv__key">{result.data.key ?? '—'}</dd>
+          </dl>
+        )
+      }
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 20px; margin: 0; }
+  .kv dt { color: var(--text-3); text-transform: uppercase; }
+  .kv dd { margin: 0; color: var(--text-1); }
+  .kv__key { overflow-wrap: anywhere; }
+</style>
