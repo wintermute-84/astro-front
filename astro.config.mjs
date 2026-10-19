@@ -9,7 +9,7 @@ export default defineConfig({
   integrations: [
     react(),
     // /demo stays unlisted (noindex, no nav link) until the owner's first-audit gate.
-    sitemap({ filter: (page) => !/^\/(dashboard|demo)(\/|$)/.test(new URL(page).pathname) }),
+    sitemap({ filter: (page) => !/^\/(dashboard|demo|denied)(\/|$)/.test(new URL(page).pathname) }),
   ],
   build: { inlineStylesheets: "always" },
   session: false,

@@ -1,0 +1,114 @@
+---
+// Cloudflare Access "custom block page" target (and the middleware's Access-mode deny).
+// Static and outside /dashboard, so Access never guards it and it can't loop.
+export const prerender = true;
+import '../styles/global.css';
+import syne800 from '@fontsource/syne/files/syne-latin-800-normal.woff2?url';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Access denied · 3DreamLab</title>
+    <meta name="description" content="This area of 3DreamLab is private." />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="preload" as="font" type="font/woff2" href={syne800} crossorigin />
+  </head>
+  <body>
+    <main class="denied">
+      <a class="denied__logo" href="/">3DREAMLAB</a>
+
+      <div class="denied__inner">
+        <span class="denied__meta">401 / NOT ON THE LIST</span>
+        <p class="denied__code" aria-hidden="true">401</p>
+        <h1 class="denied__title">ACCESS<br /><span class="accent">DENIED.</span></h1>
+        <p class="denied__text">
+          This area is private. If you should be here, sign out and sign in again with the account you were invited
+          with.
+        </p>
+        <div class="actions">
+          <a class="btn" href="/cdn-cgi/access/logout">SIGN OUT AND RETRY</a>
+          <a class="link" href="/">BACK TO 3DREAMLAB</a>
+        </div>
+      </div>
+
+      <span class="denied__foot">EDGE / PRIVATE AREA</span>
+    </main>
+
+    <style>
+      .denied {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(3rem, 10vh, 6rem);
+        padding: 1.25rem 5vw 2rem;
+        background: var(--black);
+        color: var(--white);
+      }
+
+      .denied__logo,
+      .denied__foot,
+      .denied__meta {
+        font-family: var(--font-mono);
+        font-size: var(--text-meta);
+        letter-spacing: 0.14em;
+      }
+
+      .denied__logo {
+        align-self: flex-start;
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: var(--text-nav);
+        letter-spacing: 0.12em;
+        /* ~44px tap target without growing the bar. */
+        padding: 0.9rem 0;
+        margin: -0.9rem 0;
+      }
+
+      .denied__inner {
+        max-width: 1200px;
+        border-top: 2px solid var(--white);
+        padding-top: 1.25rem;
+      }
+
+      .denied__meta { color: #b5b3ad; }
+
+      .denied__code {
+        margin: 1.5rem 0 0;
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: clamp(6rem, 27vw, 22rem);
+        line-height: 0.8;
+        letter-spacing: -0.06em;
+        color: var(--red);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .denied__title {
+        margin-top: 1.5rem;
+        font-size: var(--heading-lg);
+      }
+
+      .denied__text {
+        max-width: 32rem;
+        margin: 1.5rem 0 0;
+        font-size: var(--text-body);
+        line-height: 1.55;
+        color: #b5b3ad;
+      }
+
+      .denied .btn:focus-visible,
+      .denied .link:focus-visible,
+      .denied__logo:focus-visible {
+        outline: 2px solid var(--white);
+        outline-offset: 3px;
+      }
+
+      .denied__foot { margin-top: auto; color: var(--gray); }
+    </style>
+  </body>
+</html>

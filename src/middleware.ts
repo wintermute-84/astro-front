@@ -37,8 +37,8 @@ export const onRequest = defineMiddleware(async (ctx, next) => {
     // Only attempts that carried credentials count; the first challenge round-trip doesn't.
     const tried = ctx.request.headers.has('authorization') || ctx.request.headers.has('cf-access-jwt-assertion');
     if (tried && (await recordFailure(ctx.url.origin, ip, env.DASHBOARD_AUTH_LIMITER, cache))) return tooMany();
-    // Access mode: plain 403, no challenge, so browsers don't pop a basic-auth prompt.
-    if (auth.mode === 'access') return new Response('Forbidden.', { status: 403, headers: PRIVATE });
+    // Access mode: same page as Access's own block page; no challenge, so no basic-auth prompt.
+    if (auth.mode === 'access') return new Response(null, { status: 302, headers: { ...PRIVATE, Location: '/denied/' } });
     return new Response('Authentication required.', {
       status: 401,
       headers: { ...PRIVATE, 'WWW-Authenticate': 'Basic realm="3DreamLab Edge", charset="UTF-8"' },
