@@ -45,6 +45,7 @@ const siteKey = env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
     No access yet? <a href="/signup/">Request the preview</a>.
   </p>
   <form class="bare-form" method="post">
+    {Astro.url.searchParams.has('deleted') && !error && <p class="form-ok" role="status">Your account and projects are deleted.</p>}
     {error && <p class="form-error" role="alert">{error}</p>}
     <div class="field">
       <label for="email">Email</label>

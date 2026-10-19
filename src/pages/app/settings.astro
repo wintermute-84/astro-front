@@ -1,0 +1,100 @@
+---
+// C5: export, delete project, delete account. Deletes are confirmed by typing the slug / email.
+import Layout from '../../components/app/Layout.astro';
+import ErrorState from '../../components/dashboard/ErrorState.astro';
+import ConfirmDialog from '../../components/dashboard/ConfirmDialog.astro';
+import { clearVerification, crpc, currentProject } from '../../lib/app/edge';
+import { setAppFlash } from '../../lib/app/flash';
+import { SESSION_COOKIE, deleteUser } from '../../lib/app/session';
+import { siteDb } from '../../lib/app/site';
+
+export const prerender = false;
+
+const me = Astro.locals.customer!;
+const cur = await currentProject(me.userId, Astro.url);
+const project = cur.ok ? cur.data.project : null;
+const q = project ? `?p=${encodeURIComponent(project.slug)}` : '';
+
+if (Astro.request.method === 'POST' && cur.ok) {
+  const fd = await Astro.request.formData();
+  const typed = String(fd.get('confirm') ?? '').trim();
+  if (fd.get('_action') === 'delete-project' && project) {
+    if (typed !== project.slug) setAppFlash(Astro.cookies, { kind: 'err', message: `Not deleted: type ${project.slug} to confirm.` });
+    else {
+      const r = await crpc((api) => api.deleteProject(me.userId, project.slug));
+      if (r.ok) clearVerification(Astro.cookies);
+      setAppFlash(Astro.cookies, r.ok ? { kind: 'ok', message: `Deleted ${project.slug}. Its cache is purged; the name can't be reused.` } : { kind: 'err', message: `Delete failed: ${r.error}` });
+      if (r.ok) return Astro.redirect('/app', 303);
+    }
+    return Astro.redirect(`/app/settings${q}`, 303);
+  }
+  if (fd.get('_action') === 'delete-account') {
+    if (typed.toLowerCase() !== me.email) {
+      setAppFlash(Astro.cookies, { kind: 'err', message: 'Not deleted: type your email to confirm.' });
+      return Astro.redirect(`/app/settings${q}`, 303);
+    }
+    // Projects first: if the edge refuses, the account stays so nothing is orphaned.
+    for (const p of cur.data.projects) {
+      const r = await crpc((api) => api.deleteProject(me.userId, p.slug));
+      if (!r.ok) {
+        setAppFlash(Astro.cookies, { kind: 'err', message: `Account not deleted: deleting ${p.slug} failed (${r.error}).` });
+        return Astro.redirect(`/app/settings${q}`, 303);
+      }
+    }
+    await deleteUser(siteDb(), me);
+    Astro.cookies.delete(SESSION_COOKIE, { path: '/app' });
+    clearVerification(Astro.cookies);
+    return Astro.redirect('/app/login?deleted=1', 303);
+  }
+}
+---
+
+<Layout title="Settings" slug={project?.slug}>
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">SETTINGS</h1>
+      <p class="page-sub">Logged in as <span class="mono">{me.email}</span>.</p>
+    </div>
+  </div>
+  {!cur.ok && <ErrorState title="Could not load your projects." message={cur.error} />}
+
+  <section class="card">
+    <div class="card__head"><h2 class="label card__title">Export your data</h2></div>
+    <p>One JSON file: your account, preview request and every project (origins, rules, purge log, usage).</p>
+    <a class="btn btn--outline" href="/app/export">Download JSON</a>
+  </section>
+
+  {
+    project && (
+      <section class="card">
+        <div class="card__head"><h2 class="label card__title">Delete project</h2></div>
+        <p>Removes <b class="mono">{project.slug}</b>: rules, origin and cached responses. The edge URL stops working immediately. This can't be undone.</p>
+        <button type="button" class="btn btn--danger" commandfor="delete-project" command="show-modal">Delete {project.slug}…</button>
+      </section>
+    )
+  }
+
+  <section class="card">
+    <div class="card__head"><h2 class="label card__title">Delete account</h2></div>
+    <p>Deletes every project, your account, sessions and preview access. To use the preview again you'd need a new request.</p>
+    <button type="button" class="btn btn--danger" commandfor="delete-account" command="show-modal" disabled={!cur.ok}>Delete account…</button>
+  </section>
+
+  {
+    project && (
+      <ConfirmDialog id="delete-project" title={`Delete ${project.slug}`} confirmValue={project.slug} action={`/app/settings${q}`} submitLabel="Delete project">
+        <p>The project, its rules and its cache are removed for good.</p>
+        <input slot="fields" type="hidden" name="_action" value="delete-project" />
+      </ConfirmDialog>
+    )
+  }
+  <ConfirmDialog id="delete-account" title="Delete account" confirmValue={me.email} action={`/app/settings${q}`} submitLabel="Delete account">
+    <p>Everything goes: {cur.ok ? cur.data.projects.length : 0} project(s), your account and your access.</p>
+    <input slot="fields" type="hidden" name="_action" value="delete-account" />
+  </ConfirmDialog>
+</Layout>
+
+<style>
+  .card + .card { margin-top: 16px; }
+  .card p { margin: 0 0 12px; }
+</style>
