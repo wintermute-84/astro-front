@@ -7,6 +7,10 @@ const s = t(Astro.currentLocale);
 <footer class="footer">
   <span>© {new Date().getFullYear()} 3DreamLab · {s.footer_country}</span>
   <span>{s.footer_privacy}</span>
+  <nav class="footer__links" aria-label="Legal">
+    <a href="/privacy/" hreflang="en">{s.footer_privacy_link}</a>
+    <a href="/terms/" hreflang="en">{s.footer_terms_link}</a>
+  </nav>
 </footer>
 
 <style>
@@ -23,4 +27,9 @@ const s = t(Astro.currentLocale);
     font-size: var(--text-meta);
     letter-spacing: 0.02em;
   }
+
+  .footer__links { display: flex; gap: 1.5rem; }
+  /* ~44px tap targets without growing the footer. */
+  .footer__links a { padding: 0.9rem 0; margin: -0.9rem 0; text-decoration: underline; text-underline-offset: 0.2em; }
+  .footer__links a:hover { color: var(--white); }
 </style>

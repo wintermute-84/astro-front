@@ -1,0 +1,15 @@
+---
+import Layout from '../../components/app/Layout.astro';
+
+export const prerender = false;
+const me = Astro.locals.customer!;
+---
+
+<Layout title="Overview">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">YOU'RE IN.</h1>
+      <p class="page-sub">Logged in as {me.email}. Project setup opens here shortly; we'll email you when it does.</p>
+    </div>
+  </div>
+</Layout>

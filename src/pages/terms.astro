@@ -1,0 +1,281 @@
+---
+export const prerender = true;
+import '../styles/global.css';
+import syne800 from '@fontsource/syne/files/syne-latin-800-normal.woff2?url';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Terms · 3DreamLab</title>
+    <meta
+      name="description"
+      content="Terms for the invite-only 3DreamLab Edge preview: access, limits, paid tiers, your responsibilities, and liability."
+    />
+    <link rel="canonical" href="https://3dreamlab.com/terms/" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="preload" as="font" type="font/woff2" href={syne800} crossorigin />
+  </head>
+  <body>
+    <main class="legal">
+      <a class="legal__logo" href="/">3DREAMLAB</a>
+
+      <div class="legal__inner">
+        <h1 class="legal__title">TERMS<span class="accent">.</span></h1>
+        <p class="legal__meta">LAST UPDATED 2026-10-19 · VERSION 1 · PREVIEW</p>
+
+        <div class="legal__body">
+          <p>
+            These terms apply to the 3DreamLab Edge preview, an invite-only, free-of-charge trial of an edge caching
+            service (a proxy that caches responses from your own API at edge.3dreamlab.com).
+          </p>
+
+          <h2>Who we are</h2>
+          <p>
+            The service is provided by a Finnish sole trader (toiminimi): [TMI legal name, Y-tunnus], [address]. Contact:
+            <a href="mailto:contact@3dreamlab.com">contact@3dreamlab.com</a>.
+          </p>
+
+          <h2>The preview</h2>
+          <p>
+            Access is invite-only. You may use the preview only after we manually approve your request. We may decline
+            any request without giving a reason.
+          </p>
+          <p>
+            The service is for businesses and professionals only. By requesting access you confirm that you act for a
+            business, not as a consumer.
+          </p>
+
+          <h2>Free preview, no SLA</h2>
+          <p>
+            The preview is free of charge. It is provided “as is”, on a best-effort basis. We do not guarantee uptime or
+            performance. Features and limits may change. Current Free tier limits: 1,000 requests per day, 1 project,
+            1 origin, 3 cache rules and 3 purges per day.
+          </p>
+          <p>
+            If you exceed the daily request limit, responses at edge.3dreamlab.com may return HTTP 429. Your own
+            site or API is not affected.
+          </p>
+
+          <h2>Paid tiers</h2>
+          <p>
+            Starter (€99/month) and Pro (€299/month) are available only on request, after a separate written agreement
+            and a manual invoice. VAT may be added. Nothing is charged automatically, and there is no card payment on
+            this site. Paid tiers are governed by that separate agreement; where it conflicts with these terms, the
+            separate agreement prevails.
+          </p>
+
+          <h2>Your responsibilities</h2>
+          <p>
+            You must own or be authorized to use the origin URL you connect. We require proof via a DNS TXT record
+            or a file at <code>/.well-known</code> on that origin.
+          </p>
+          <p>You must not use the service to:</p>
+          <ul>
+            <li>host or proxy unlawful content;</li>
+            <li>attack or overload third parties;</li>
+            <li>proxy content you have no right to serve;</li>
+            <li>try to access other customers' data.</li>
+          </ul>
+          <p>
+            Your email is your login. Keep your email account secure.
+          </p>
+
+          <h2>What the edge serves</h2>
+          <p>
+            The edge cache serves JSON, XML, and text API responses only. The maximum response size is 1 MB. Cookies and
+            Authorization headers are stripped. HTML is not served.
+          </p>
+
+          <h2>Data in your API responses</h2>
+          <p>
+            For the content your origin returns through the edge, you are the controller and we process it only on your
+            behalf, to cache and serve it as your rules say. Cloudflare is our sub-processor. We keep it confidential,
+            protect it with appropriate security measures, help you answer data subject requests where needed, and
+            delete it when cached copies expire or when you delete the project. Don't route special categories of
+            personal data through the preview. A separate data processing agreement is available on request.
+          </p>
+
+          <h2>Intellectual property</h2>
+          <p>
+            The service, console and documentation remain ours. During the preview you get a revocable, non-exclusive,
+            non-transferable right to use them for evaluating the service. Your data and your API content remain yours.
+          </p>
+
+          <h2>Suspension and termination</h2>
+          <p>
+            We may suspend or end any account or project at any time, especially for abuse, security risk, or
+            non-payment. We give notice where reasonable. You may delete your project or account at any time in Settings
+            in the console.
+          </p>
+
+          <h2>Liability</h2>
+          <p>
+            To the extent permitted by law, we are not liable for indirect or consequential loss, lost profit, or lost
+            data. Our total liability for the free preview is limited to EUR 100. Nothing in these terms limits
+            liability for wilful misconduct or gross negligence, or any other liability that cannot be limited under
+            Finnish law.
+          </p>
+          <p>
+            You are responsible for, and will compensate us for, third-party claims and costs that result from your
+            origin content or your breach of these terms.
+          </p>
+
+          <h2>Data protection</h2>
+          <p>
+            How we process personal data is described in our <a href="/privacy/">Privacy</a> notice.
+          </p>
+
+          <h2>Law and disputes</h2>
+          <p>
+            These terms are governed by Finnish law. Disputes are settled in the District Court of
+            [municipality] as the court of first instance.
+          </p>
+
+          <h2>Changes to these terms</h2>
+          <p>
+            We post updates on this page with a new date. We email account holders about material changes at least 14
+            days before they take effect; if you continue to use the service after that date, you accept the updated
+            terms. If you don't agree, you can delete your account before then.
+          </p>
+        </div>
+      </div>
+
+      <footer class="legal__foot">
+        <a href="/privacy/">Privacy</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/terms/">Terms</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/">Home</a>
+      </footer>
+    </main>
+
+    <style>
+      .legal {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(2rem, 6vh, 4rem);
+        padding: 1.25rem 5vw 2rem;
+        background: var(--black);
+        color: var(--white);
+        overflow-x: hidden;
+      }
+
+      .legal__logo,
+      .legal__meta,
+      .legal__foot {
+        font-family: var(--font-mono);
+        font-size: var(--text-meta);
+        letter-spacing: 0.14em;
+      }
+
+      .legal__logo {
+        align-self: flex-start;
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: var(--text-nav);
+        letter-spacing: 0.12em;
+        padding: 0.9rem 0;
+        margin: -0.9rem 0;
+        color: var(--white);
+        text-decoration: none;
+      }
+
+      .legal__inner {
+        max-width: 42rem;
+        border-top: 2px solid var(--white);
+        padding-top: 1.25rem;
+      }
+
+      .legal__meta {
+        margin: 1rem 0 0;
+        color: #b5b3ad;
+      }
+
+      .legal__title {
+        margin: 0;
+        font-size: var(--heading-lg);
+        line-height: 1.05;
+      }
+
+      .legal__body {
+        margin-top: 1.75rem;
+        font-size: var(--text-body);
+        line-height: 1.6;
+        color: #b5b3ad;
+      }
+
+      .legal__body p {
+        margin: 0 0 1rem;
+      }
+
+      .legal__body h2 {
+        margin: 2rem 0 0.75rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: 1.25rem;
+        line-height: 1.3;
+        text-transform: uppercase;
+        color: var(--white);
+        letter-spacing: 0.04em;
+      }
+
+      .legal__body h2:first-of-type {
+        margin-top: 0;
+      }
+
+      .legal__body ul {
+        margin: 0 0 1rem;
+        padding-left: 1.25rem;
+      }
+
+      .legal__body li {
+        margin-bottom: 0.35rem;
+      }
+
+      .legal__body a {
+        color: var(--white);
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+        overflow-wrap: anywhere;
+      }
+
+      .legal__body code {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+        color: var(--white);
+      }
+
+      .legal__logo:focus-visible,
+      .legal__foot a:focus-visible,
+      .legal__body a:focus-visible {
+        outline: 2px solid var(--white);
+        outline-offset: 3px;
+      }
+
+      .legal__foot {
+        margin-top: auto;
+        color: #9a9a9a;
+      }
+
+      .legal__foot a {
+        display: inline-block;
+        padding: 0.75rem 0;
+        margin: -0.75rem 0;
+        color: #9a9a9a;
+        text-decoration: none;
+      }
+
+      .legal__foot a:hover {
+        color: var(--white);
+        text-decoration: underline;
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,176 @@
+---
+// Public preview request. Static; Turnstile loads only once the visitor starts filling the form.
+export const prerender = true;
+import Bare from '../components/app/Bare.astro';
+import { PLANS, PLAN_IDS } from '../lib/app/signup';
+
+const fmt = (n: number) => n.toLocaleString('en-US');
+---
+
+<Bare
+  title="Request the Edge preview"
+  description="Request invite-only access to the 3DreamLab Edge preview: an edge cache in front of your slow API. Free tier, or Starter and Pro on manual invoice."
+  meta="EDGE PREVIEW / INVITE ONLY"
+  index
+>
+  <a slot="top" class="bare__back" href="/">← SITE</a>
+  <h1 class="bare__title">REQUEST THE <span class="accent">PREVIEW.</span></h1>
+  <p class="bare__text">
+    An edge cache in front of your slow stock, price or PIM API, with your own console for rules, purges and usage.
+    The preview is invite-only: we read every request and email you when you're in.
+  </p>
+
+  <form class="bare-form signup" id="signup" novalidate>
+    <fieldset class="tiers">
+      <legend>Tier</legend>
+      {
+        PLAN_IDS.map((id) => {
+          const p = PLANS[id];
+          return (
+            <label class="tier">
+              <input type="radio" name="plan" value={id} checked={id === 'free'} required />
+              <span class="tier__head">
+                <span class="tier__name">{p.label}</span>
+                <span class="tier__price">{p.price}</span>
+              </span>
+              <span class="tier__list">
+                {fmt(p.perDay)} requests/day · {p.projects} project{p.projects > 1 ? 's' : ''} · {p.origins} origin{p.origins > 1 ? 's' : ''} · {p.rules} rules · {p.metricsDays}-day metrics · {fmt(p.purgesPerDay)} purges/day · {p.methods} · Support: {p.support}
+              </span>
+              {id !== 'free' && <span class="tier__note">Request access · manual invoice, nothing charged here</span>}
+            </label>
+          );
+        })
+      }
+    </fieldset>
+
+    <div class="field">
+      <label for="email">Work email</label>
+      <input type="email" id="email" name="email" required maxlength="254" autocomplete="email" />
+    </div>
+    <div class="field">
+      <label for="company">Company (optional)</label>
+      <input type="text" id="company" name="company" maxlength="100" autocomplete="organization" />
+    </div>
+    <div class="field">
+      <label for="note">Project note (optional)</label>
+      <textarea id="note" name="note" maxlength="1000" rows="3" placeholder="Which API is slow, roughly how many requests a day?"></textarea>
+    </div>
+    <label class="consent">
+      <input type="checkbox" name="consent" required />
+      <span>I accept the <a href="/privacy/">privacy notice</a> and the <a href="/terms/">preview terms</a>.</span>
+    </label>
+    <div class="turnstile" id="turnstile"></div>
+    <p class="form-error" id="signup-error" role="alert" hidden></p>
+    <button class="btn" id="signup-btn">REQUEST ACCESS</button>
+  </form>
+
+  <div class="signup-done" id="signup-done" hidden tabindex="-1">
+    <p class="form-ok"><b>Thanks, request received.</b></p>
+    <p class="bare__text">
+      If it's a fit, you'll get an email with a login link. Approved emails log in at
+      <a href="/app/login">3dreamlab.com/app/login</a>.
+    </p>
+  </div>
+</Bare>
+
+<style>
+  .bare__back { font-family: var(--font-mono); font-size: var(--text-meta); letter-spacing: 0.14em; padding: 0.9rem 0; margin: -0.9rem 0; }
+  .signup { max-width: 40rem; }
+  .tiers { border: 0; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
+  .tier {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1rem 1rem 1rem 2.75rem;
+    position: relative;
+    border: 1px solid #444;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .tier:has(input:checked) { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+  .tier:has(input:focus-visible) { outline: 2px solid var(--white); outline-offset: 3px; }
+  .tier input { position: absolute; left: 1rem; top: 1.15rem; width: 1.1rem; height: 1.1rem; accent-color: var(--red); margin: 0; }
+  .tier__head { display: flex; justify-content: space-between; gap: 1rem; font-family: var(--font-heading); font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; }
+  .tier__price { font-variant-numeric: tabular-nums; }
+  .tier__list { font-size: 0.875rem; line-height: 1.5; color: #b5b3ad; }
+  .tier__note { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.04em; color: var(--white); }
+  .consent { display: flex; gap: 0.75rem; align-items: flex-start; line-height: 1.5; color: #b5b3ad; }
+  .consent input { width: 1.25rem; height: 1.25rem; margin: 0.15rem 0 0; flex: none; accent-color: var(--red); }
+  .signup-done { margin-top: 2rem; }
+</style>
+
+<script>
+  type Turnstile = { render(el: HTMLElement, o: Record<string, unknown>): string; reset(id?: string): void };
+  const w = window as unknown as { turnstile?: Turnstile };
+  const form = document.getElementById('signup') as HTMLFormElement;
+  const errorEl = document.getElementById('signup-error')!;
+  const btn = document.getElementById('signup-btn') as HTMLButtonElement;
+  const box = document.getElementById('turnstile')!;
+  let token = '';
+  let widget: string | undefined;
+  let started: Promise<void> | null = null;
+
+  const showError = (msg: string) => {
+    errorEl.textContent = msg;
+    errorEl.hidden = false;
+  };
+
+  // Captcha only once someone interacts with the form: keeps the page load free of third-party JS.
+  function startCaptcha() {
+    started ??= (async () => {
+      const { turnstileSiteKey } = await (await fetch('/api/config')).json();
+      if (!turnstileSiteKey) throw new Error('no key');
+      await new Promise<void>((ok, fail) => {
+        const s = document.createElement('script');
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        s.async = true;
+        s.onload = () => ok();
+        s.onerror = () => fail(new Error('load'));
+        document.head.appendChild(s);
+      });
+      widget = w.turnstile!.render(box, {
+        sitekey: turnstileSiteKey,
+        theme: 'dark',
+        callback: (t: string) => (token = t),
+        'expired-callback': () => (token = ''),
+      });
+    })().catch(() => showError('The captcha could not load. Email contact@3dreamlab.com instead.'));
+    return started;
+  }
+  form.addEventListener('focusin', startCaptcha, { once: true });
+  form.addEventListener('pointerdown', startCaptcha, { once: true });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorEl.hidden = true;
+    if (!form.reportValidity()) return;
+    await startCaptcha();
+    if (!token) return showError('Complete the captcha above, then send again.');
+    btn.disabled = true;
+    const fd = new FormData(form);
+    try {
+      const res = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: fd.get('plan'),
+          email: fd.get('email'),
+          company: fd.get('company'),
+          note: fd.get('note'),
+          consent: fd.get('consent') === 'on',
+          turnstileToken: token,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      form.hidden = true;
+      const done = document.getElementById('signup-done')!;
+      done.hidden = false;
+      done.focus();
+    } catch (err) {
+      showError(err instanceof Error && err.message ? err.message : 'Something went wrong. Try again.');
+      token = '';
+      w.turnstile?.reset(widget);
+      btn.disabled = false;
+    }
+  });
+</script>

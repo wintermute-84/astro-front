@@ -1,9 +1,14 @@
 import { defineMiddleware } from 'astro:middleware';
+import type { APIContext, MiddlewareNext } from 'astro';
 import { env } from 'cloudflare:workers';
 import { createRemoteJWKSet } from 'jose';
 import { authorize, type AuthEnv } from './lib/dashboard/auth';
 import { LOCKOUT_S, isLockedOut, recordFailure } from './lib/dashboard/ratelimit';
 import { takeFlash } from './lib/dashboard/edge';
+import { appRoute, isSameOriginWrite } from './lib/app/paths';
+import { SESSION_COOKIE, readSession } from './lib/app/session';
+import { nowS, siteDb } from './lib/app/site';
+import { takeAppFlash } from './lib/app/flash';
 
 const PRIVATE = { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' };
 
@@ -23,7 +28,28 @@ function isDashboard(pathname: string, routePattern: string) {
   return p === '/dashboard' || p.startsWith('/dashboard/') || routePattern.startsWith('/dashboard');
 }
 
+const withPrivate = (upstream: Response) => {
+  // Copy: some responses (e.g. Response.redirect) have immutable headers.
+  const res = new Response(upstream.body, upstream);
+  for (const [k, v] of Object.entries(PRIVATE)) res.headers.set(k, v);
+  return res;
+};
+
+// Customer console: login/verify/logout are public, everything else needs an app session.
+async function app(ctx: APIContext, next: MiddlewareNext): Promise<Response> {
+  const route = appRoute(ctx.url.pathname, ctx.routePattern);
+  if (!isSameOriginWrite(ctx.request, ctx.url)) return new Response('Cross-site request refused.', { status: 403, headers: PRIVATE });
+  if (route === 'private') {
+    const customer = await readSession(siteDb(), ctx.cookies.get(SESSION_COOKIE)?.value, nowS());
+    if (!customer) return new Response(null, { status: 303, headers: { ...PRIVATE, Location: '/app/login' } });
+    ctx.locals.customer = customer;
+    ctx.locals.flash = takeAppFlash(ctx.cookies);
+  }
+  return withPrivate(await next());
+}
+
 export const onRequest = defineMiddleware(async (ctx, next) => {
+  if (appRoute(ctx.url.pathname, ctx.routePattern) !== 'none') return app(ctx, next);
   if (!isDashboard(ctx.url.pathname, ctx.routePattern)) return next();
 
   const ip = ctx.request.headers.get('cf-connecting-ip') ?? 'unknown';

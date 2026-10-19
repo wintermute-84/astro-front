@@ -1,0 +1,107 @@
+---
+// Brutalist single-column page (the /denied look) for /signup, /app/login and /app/verify.
+import '../../styles/global.css';
+import syne800 from '@fontsource/syne/files/syne-latin-800-normal.woff2?url';
+
+interface Props {
+  title: string;
+  description: string;
+  meta: string;
+  /** /signup is indexable; /app pages are not. */
+  index?: boolean;
+}
+const { title, description, meta, index = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · 3DreamLab</title>
+    <meta name="description" content={description} />
+    {index ? <link rel="canonical" href={canonical} /> : <meta name="robots" content="noindex, nofollow" />}
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="preload" as="font" type="font/woff2" href={syne800} crossorigin />
+    <slot name="head" />
+  </head>
+  <body>
+    <div class="bare">
+      <header class="bare__top">
+        <a class="bare__logo" href="/">3DREAMLAB</a>
+        <slot name="top" />
+      </header>
+      <main class="bare__inner">
+        <span class="bare__meta">{meta}</span>
+        <slot />
+      </main>
+      <footer class="bare__foot">
+        <span>EDGE / PREVIEW</span>
+        <nav aria-label="Legal"><a href="/privacy/">Privacy</a> <a href="/terms/">Terms</a></nav>
+      </footer>
+    </div>
+
+    <style is:global>
+      .bare {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(2.5rem, 8vh, 5rem);
+        padding: 1.25rem 5vw 2rem;
+        background: var(--black);
+        color: var(--white);
+      }
+      .bare__top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+      .bare__logo, .bare__foot, .bare__meta { font-family: var(--font-mono); font-size: var(--text-meta); letter-spacing: 0.14em; }
+      .bare__logo {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: var(--text-nav);
+        letter-spacing: 0.12em;
+        padding: 0.9rem 0;
+        margin: -0.9rem 0;
+      }
+      .bare__inner { width: 100%; max-width: 1100px; border-top: 2px solid var(--white); padding-top: 1.25rem; }
+      .bare__meta { color: #b5b3ad; }
+      .bare__title { margin-top: 1.5rem; font-size: var(--heading-lg); overflow-wrap: anywhere; }
+      .bare__text { max-width: 38rem; margin: 1.25rem 0 0; font-size: var(--text-body); line-height: 1.55; color: #b5b3ad; }
+      .bare__text a, .bare__foot a, .bare-form a { color: var(--white); text-decoration: underline; text-underline-offset: 0.2em; }
+      .bare__foot { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; color: #9a9a9a; }
+      .bare__foot nav { display: flex; gap: 1.25rem; }
+      .bare__foot a { display: inline-block; padding: 0.75rem 0; margin: -0.75rem 0; }
+      .bare a:focus-visible, .bare button:focus-visible, .bare input:focus-visible, .bare textarea:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+
+      .bare-form { margin-top: 2rem; max-width: 30rem; display: flex; flex-direction: column; gap: 1.5rem; }
+      .bare-form .field label, .bare-form legend {
+        display: block;
+        font-size: var(--text-label);
+        letter-spacing: 0.1em;
+        color: #b5b3ad;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+      }
+      .bare-form .field input, .bare-form .field textarea {
+        width: 100%;
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid #555;
+        border-radius: 0;
+        color: var(--white);
+        font: inherit;
+        font-size: var(--text-body);
+        padding: 0.5rem 0;
+      }
+      .bare-form .field input:focus, .bare-form .field textarea:focus { border-bottom-color: var(--red); outline: none; }
+      .bare-form .field textarea { resize: vertical; min-height: 4rem; }
+      .bare-form .hint { margin: 0.4rem 0 0; font-family: var(--font-mono); font-size: var(--text-meta); color: #9a9a9a; }
+      .bare-form button.btn { align-self: flex-start; border: 0; cursor: pointer; }
+      .bare-form button:disabled { opacity: 0.5; cursor: not-allowed; }
+      .btn--ghost { background: transparent; color: var(--white); box-shadow: inset 0 0 0 1px var(--white); }
+      .form-error { margin: 0; color: #ff5a3c; font-size: var(--text-body); }
+      .form-ok { margin: 0; color: var(--white); font-size: var(--text-body); }
+      .turnstile { min-height: 65px; }
+    </style>
+  </body>
+</html>

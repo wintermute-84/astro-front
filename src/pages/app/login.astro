@@ -1,0 +1,56 @@
+---
+// Step 1 of the email-code login. Whatever happens after the captcha, the answer is the
+// same redirect to /app/verify: it never reveals whether an email is on the preview list.
+import { env, waitUntil } from 'cloudflare:workers';
+import Bare from '../../components/app/Bare.astro';
+import { normEmail, randomHex, requestCode } from '../../lib/app/otp';
+import { LOGIN_COOKIE, LOGIN_TTL_S, cookieOpts } from '../../lib/app/session';
+import { codeMail, sendMail } from '../../lib/app/mail';
+import { clientIp, nowS, otpIpAllowed, otpPepper, siteDb, verifyTurnstile } from '../../lib/app/site';
+
+export const prerender = false;
+
+let error: string | null = null;
+let email = '';
+if (Astro.request.method === 'POST') {
+  const fd = await Astro.request.formData();
+  const ip = clientIp(Astro.request);
+  email = String(fd.get('email') ?? '').trim();
+  const norm = normEmail(email);
+  if (!norm) error = 'Enter a valid email address.';
+  else if (!(await otpIpAllowed(ip))) error = 'Too many attempts from your network. Wait a minute and try again.';
+  else if (!(await verifyTurnstile(String(fd.get('cf-turnstile-response') ?? ''), ip))) error = 'The captcha check failed. Try again.';
+  else {
+    const db = siteDb();
+    const loginId = randomHex(16);
+    const now = nowS();
+    const r = await requestCode(db, norm, loginId, { pepper: otpPepper(), ip, now });
+    if (r.code) {
+      if (import.meta.env.DEV) console.log(`[DEV] login code for ${norm}: ${r.code}`);
+      // After the response, so timing doesn't tell allowlisted emails apart.
+      waitUntil(sendMail(db, env, codeMail(norm, r.code), now));
+    }
+    Astro.cookies.set(LOGIN_COOKIE, loginId, cookieOpts(LOGIN_TTL_S));
+    return Astro.redirect('/app/verify', 303);
+  }
+}
+const siteKey = env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+---
+
+<Bare title="Log in" description="Log in to the 3DreamLab Edge preview console." meta="EDGE PREVIEW / LOG IN">
+  <script slot="head" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <h1 class="bare__title">LOG <span class="accent">IN.</span></h1>
+  <p class="bare__text">
+    We email you a 6-digit code, no password. The preview is invite-only: codes only go to approved emails.
+    No access yet? <a href="/signup/">Request the preview</a>.
+  </p>
+  <form class="bare-form" method="post">
+    {error && <p class="form-error" role="alert">{error}</p>}
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required maxlength="254" autocomplete="email" value={email} />
+    </div>
+    <div class="cf-turnstile turnstile" data-sitekey={siteKey} data-theme="dark"></div>
+    <button class="btn">EMAIL ME A CODE</button>
+  </form>
+</Bare>

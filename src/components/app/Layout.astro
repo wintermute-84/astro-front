@@ -1,0 +1,68 @@
+---
+// Customer console shell: the dashboard's look (dashboard.css), none of its owner-wide data.
+import '../../styles/global.css';
+import '../../styles/dashboard.css';
+import Toast from '../dashboard/Toast.astro';
+
+interface Props {
+  title: string;
+  /** Selected project slug (from listMyProjects), carried in nav links as ?p=. */
+  slug?: string;
+}
+const { title, slug } = Astro.props;
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const q = slug ? `?p=${encodeURIComponent(slug)}` : '';
+const flash = Astro.locals.flash;
+const nav = [
+  { label: 'Overview', href: '/app' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <title>{title} · 3DreamLab Edge</title>
+  </head>
+  <body class="dash">
+    <div class="shell">
+      <nav class="sidebar" aria-label="Console">
+        <a href={`/app${q}`} class="sidebar__logo">3DREAMLAB <span>/ EDGE</span></a>
+        <div class="sidebar__group">
+          <span class="label">{slug ?? 'Preview'}</span>
+          <ul>
+            {
+              nav.map((i) => (
+                <li>
+                  <a class="sidebar__item" href={i.href + q} aria-current={i.href === path ? 'page' : undefined}>
+                    {i.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </nav>
+
+      <div class="main">
+        <header class="topbar">
+          <ol class="crumbs mono" aria-label="Breadcrumb">
+            <li><a href={`/app${q}`}>{slug ?? 'Console'}</a></li>
+            <li aria-current="page">{title}</li>
+          </ol>
+          <div class="topbar__right">
+            <span class="topbar__user mono">{Astro.locals.customer?.email}</span>
+            <form method="post" action="/app/logout"><button class="btn btn--outline">Log out</button></form>
+          </div>
+        </header>
+        <main class="content" id="main">
+          <slot />
+        </main>
+      </div>
+    </div>
+    {flash && <Toast kind={flash.kind} message={flash.message} dismissHref={Astro.url.pathname + Astro.url.search} />}
+  </body>
+</html>

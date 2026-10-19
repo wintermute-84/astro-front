@@ -27,6 +27,7 @@ const s = t(locale);
         ))}
       </ul>
     </div>
+    <a href="/signup/" class="nav__link">{s.nav_signup}</a>
     <a href="#contact" class="nav__link" data-offer="audit">{s.nav_cta}</a>
   </div>
 </nav>
@@ -157,9 +158,11 @@ const s = t(locale);
     opacity: 0.7;
   }
 
-  /* Phones: the open switcher takes the CTA's place until it closes. */
+  /* Phones: the open switcher takes the CTA's place until it closes. Long fi/sv labels
+     wrap to a second row instead of running off-screen. */
   @media (max-width: 600px) {
     .nav__right:has(.is-open) .nav__link { display: none; }
+    .nav__right { flex-wrap: wrap; justify-content: flex-end; column-gap: 1.25rem; row-gap: 1.6rem; }
   }
 
   @media (prefers-reduced-motion: reduce) {

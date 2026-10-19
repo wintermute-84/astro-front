@@ -1,0 +1,103 @@
+---
+// Step 2: the code from the email, bound to this browser's login_id cookie.
+import { env, waitUntil } from 'cloudflare:workers';
+import Bare from '../../components/app/Bare.astro';
+import { OTP, cleanup, resendCode, verifyCode } from '../../lib/app/otp';
+import { LOGIN_COOKIE, SESSION_COOKIE, SESSION_TTL_S, completeLogin, cookieOpts } from '../../lib/app/session';
+import { codeMail, sendMail } from '../../lib/app/mail';
+import { clientIp, nowS, otpIpAllowed, otpPepper, siteDb } from '../../lib/app/site';
+
+export const prerender = false;
+
+const loginId = Astro.cookies.get(LOGIN_COOKIE)?.value;
+if (!loginId || !/^[0-9a-f]{32}$/.test(loginId)) return Astro.redirect('/app/login', 303);
+
+let error: string | null = null;
+let notice: string | null = null;
+if (Astro.request.method === 'POST') {
+  const fd = await Astro.request.formData();
+  const ip = clientIp(Astro.request);
+  const db = siteDb();
+  const now = nowS();
+  const ctx = { pepper: otpPepper(), ip, now };
+  if (!(await otpIpAllowed(ip))) error = 'Too many attempts from your network. Wait a minute and try again.';
+  else if (fd.get('_action') === 'resend') {
+    const r = await resendCode(db, loginId, ctx);
+    if (r.code) {
+      if (import.meta.env.DEV) console.log(`[DEV] login code for ${r.email}: ${r.code}`);
+      waitUntil(sendMail(db, env, codeMail(r.email, r.code), now));
+    }
+    notice = 'If your email is approved for the preview, a new code is on its way. The previous code no longer works.';
+  } else {
+    const v = await verifyCode(db, loginId, String(fd.get('code') ?? '').replace(/\s/g, ''), ctx);
+    if (v.ok) {
+      const { token } = await completeLogin(db, v.email, now);
+      Astro.cookies.delete(LOGIN_COOKIE, { path: '/app' });
+      Astro.cookies.set(SESSION_COOKIE, token, cookieOpts(SESSION_TTL_S));
+      waitUntil(cleanup(db, now));
+      return Astro.redirect('/app', 303);
+    }
+    error =
+      v.reason === 'locked'
+        ? 'Too many wrong codes. Wait 15 minutes, then ask for a new code.'
+        : 'Wrong or expired code. Check the latest email, or ask for a new code.';
+  }
+}
+---
+
+<Bare title="Enter code" description="Enter your 3DreamLab login code." meta="EDGE PREVIEW / CHECK YOUR EMAIL">
+  <h1 class="bare__title">ENTER <span class="accent">CODE.</span></h1>
+  <p class="bare__text">
+    If your email is approved for the preview, we sent a 6-digit code. It works for 5 minutes, in this browser only.
+    Wrong email? <a href="/app/login">Start again</a>.
+  </p>
+  <form class="bare-form" method="post">
+    {error && <p class="form-error" role="alert">{error}</p>}
+    {notice && <p class="form-ok" role="status">{notice}</p>}
+    <div class="field">
+      <label for="code">6-digit code</label>
+      <input
+        id="code"
+        name="code"
+        required
+        inputmode="numeric"
+        autocomplete="one-time-code"
+        pattern="[0-9 ]{6,7}"
+        maxlength="7"
+        autofocus
+        class="otp"
+      />
+    </div>
+    <button class="btn">LOG IN</button>
+  </form>
+  <form class="bare-form resend" method="post">
+    <input type="hidden" name="_action" value="resend" />
+    <button class="btn btn--ghost" id="resend" data-wait={OTP.RESEND_AFTER_S}>SEND A NEW CODE</button>
+    <p class="hint" id="resend-hint" aria-live="polite"></p>
+  </form>
+</Bare>
+
+<style>
+  .otp { font-family: var(--font-mono); font-size: 2rem !important; letter-spacing: 0.4em; max-width: 14rem; }
+  .resend { margin-top: 2.5rem; }
+</style>
+
+<script>
+  // Resend unlocks after 60 s (the server enforces it too).
+  const btn = document.getElementById('resend') as HTMLButtonElement | null;
+  const hint = document.getElementById('resend-hint');
+  if (btn && hint) {
+    let left = Number(btn.dataset.wait);
+    btn.disabled = true;
+    const tick = () => {
+      if (left <= 0) {
+        btn.disabled = false;
+        hint.textContent = '';
+        return;
+      }
+      hint.textContent = `Available in ${left--} s`;
+      setTimeout(tick, 1000);
+    };
+    tick();
+  }
+</script>

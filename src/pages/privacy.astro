@@ -1,0 +1,306 @@
+---
+export const prerender = true;
+import '../styles/global.css';
+import syne800 from '@fontsource/syne/files/syne-latin-800-normal.woff2?url';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy · 3DreamLab</title>
+    <meta
+      name="description"
+      content="How 3DreamLab Edge preview collects, uses, and protects personal data for sign-up, accounts, sessions, and project configuration."
+    />
+    <link rel="canonical" href="https://3dreamlab.com/privacy/" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="preload" as="font" type="font/woff2" href={syne800} crossorigin />
+  </head>
+  <body>
+    <main class="legal">
+      <a class="legal__logo" href="/">3DREAMLAB</a>
+
+      <div class="legal__inner">
+        <h1 class="legal__title">PRIVACY<span class="accent">.</span></h1>
+        <p class="legal__meta">LAST UPDATED 2026-10-19 · VERSION 1 · PREVIEW</p>
+
+        <div class="legal__body">
+          <p>
+            This notice describes how we process personal data when you use the 3DreamLab Edge preview at
+            edge.3dreamlab.com and related sign-up and account features on 3dreamlab.com.
+          </p>
+
+          <h2>Who is responsible</h2>
+          <p>
+            The data controller is a Finnish sole trader (toiminimi): [TMI legal name, Y-tunnus], [address]. For
+            privacy requests, contact <a href="mailto:contact@3dreamlab.com">contact@3dreamlab.com</a>.
+          </p>
+
+          <h2>What we process and why</h2>
+          <p>
+            The following describes each category of personal data we process for the Edge preview. Your email (and,
+            for projects, the origin URL) is needed to request and use the preview; without it we cannot approve or run
+            your account.
+          </p>
+
+          <h3>Sign-up request</h3>
+          <p>
+            When you submit the form at /signup, we process your email, chosen tier, optional company name, optional
+            project note, IP address, and the time of submission. We use this to decide on and answer your preview
+            request. Legal basis: steps prior to entering into a contract at your request (GDPR Art. 6(1)(b)); if you
+            sign up on behalf of a company, our legitimate interest in handling that company's request (Art. 6(1)(f)).
+          </p>
+
+          <h3>Account</h3>
+          <p>
+            If you receive access, we process your email, an internal user id, and the time of account creation and
+            last login. Legal basis: contract (Art. 6(1)(b)), or legitimate interest (Art. 6(1)(f)) when you use the
+            service on behalf of a company.
+          </p>
+
+          <h3>Login codes</h3>
+          <p>
+            We send 6-digit one-time codes by email. We store only a keyed hash (HMAC) of each code. Codes are valid
+            for 5 minutes and are deleted after use or expiry. Legal basis: contract.
+          </p>
+
+          <h3>Session cookies</h3>
+          <p>
+            We use a strictly necessary HttpOnly cookie <code>app_session</code> containing a random session token; we
+            store only a hash of it. Sessions last 30 days or until you log out; logging out ends all sessions. We also
+            set a short-lived <code>login_id</code> cookie (10 minutes) that ties a login code to your browser. We do
+            not use analytics or advertising cookies, so we do not show a cookie banner. Cloudflare Turnstile (below) may
+            store a short-lived security token in your browser while you complete a form; this is strictly necessary
+            to protect the forms from bots.
+          </p>
+
+          <h3>Security and abuse prevention</h3>
+          <p>
+            We process IP address and email in rate-limit and throttle records (for example failed codes and how many
+            codes were sent). We keep these records for 30 days. Legal basis: legitimate interest in keeping the
+            service and accounts secure (Art. 6(1)(f)).
+          </p>
+
+          <h3>Project data</h3>
+          <p>
+            In the console we process your project name, origin URL (your API base URL), cache rules, purge log, and
+            usage counts (requests per day and cache hit/miss metrics). Legal basis: contract.
+          </p>
+          <p>
+            The responses your API sends through the edge are cached on your behalf: for that content you are the
+            controller and we act as your processor (see the <a href="/terms/">terms</a>). Cached copies expire under
+            your rules and are purged when you delete the project.
+          </p>
+
+          <h3>Bot protection</h3>
+          <p>
+            Sign-up and login forms use Cloudflare Turnstile. Legal basis: legitimate interest (Art. 6(1)(f)).
+          </p>
+
+          <h3>Email</h3>
+          <p>
+            We send login codes, approval emails, and replies. Messages sent through the site contact form are used
+            only to answer you and are kept until the inquiry and any follow-up are handled. Legal basis: steps prior to
+            a contract (Art. 6(1)(b)) or our legitimate interest in answering business inquiries (Art. 6(1)(f)).
+          </p>
+
+          <h2>Processors and transfers</h2>
+          <p>
+            We use processors: Cloudflare, Inc. (hosting, Workers, D1 database, edge cache, Turnstile; data may be
+            processed globally on Cloudflare's network; the database is located in Western Europe) and Resend (email
+            delivery; sending region EU, Ireland/eu-west-1; Resend keeps message content for about 30 days). Replies and
+            contact messages are received in our mailbox at [mailbox provider].
+          </p>
+          <p>
+            Both providers are US companies, so data may be transferred outside the EEA. Cloudflare relies on its
+            EU-US Data Privacy Framework certification and the EU Standard Contractual Clauses; Resend relies on the
+            Standard Contractual Clauses in its data processing agreement. Ask us for details of these safeguards. We do not sell personal data and we do not use it for
+            advertising.
+          </p>
+
+          <h2>Retention</h2>
+          <ul>
+            <li>Login codes: until used or 5 minutes.</li>
+            <li>Sessions: 30 days or until logout.</li>
+            <li>Throttle records: 30 days.</li>
+            <li>Rejected sign-up requests: 90 days, to handle repeat requests and abuse (legitimate interest, Art. 6(1)(f)).</li>
+            <li>
+              Account and project data: until you delete the account or project in the console (Settings), or 90 days
+              after the preview ends.
+            </li>
+            <li>Invoices and accounting records for paid tiers: as required by the Finnish Accounting Act (up to 10 years).</li>
+            <li>Backups and logs at our processors may persist for a short additional period.</li>
+          </ul>
+
+          <h2>Your rights</h2>
+          <p>
+            You have the right to access, rectification, erasure, restriction, objection (including to
+            legitimate-interest processing), and data portability. You can export your data as JSON in the console
+            under Settings. We answer requests within one month.
+          </p>
+          <p>
+            You may lodge a complaint with the Finnish supervisory authority: Office of the Data Protection Ombudsman
+            (Tietosuojavaltuutetun toimisto), <a href="https://tietosuoja.fi">tietosuoja.fi</a>.
+          </p>
+
+          <h2>Automated decisions</h2>
+          <p>We do not make decisions based solely on automated processing. Approval of preview requests is done by a person.</p>
+
+          <h2>Children</h2>
+          <p>The service is not intended for anyone under 16. It is aimed at business users.</p>
+
+          <h2>Changes</h2>
+          <p>
+            We update this page and the “last updated” date. Material changes are emailed to account holders.
+          </p>
+        </div>
+      </div>
+
+      <footer class="legal__foot">
+        <a href="/privacy/">Privacy</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/terms/">Terms</a>
+        <span aria-hidden="true"> · </span>
+        <a href="/">Home</a>
+      </footer>
+    </main>
+
+    <style>
+      .legal {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(2rem, 6vh, 4rem);
+        padding: 1.25rem 5vw 2rem;
+        background: var(--black);
+        color: var(--white);
+        overflow-x: hidden;
+      }
+
+      .legal__logo,
+      .legal__meta,
+      .legal__foot {
+        font-family: var(--font-mono);
+        font-size: var(--text-meta);
+        letter-spacing: 0.14em;
+      }
+
+      .legal__logo {
+        align-self: flex-start;
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: var(--text-nav);
+        letter-spacing: 0.12em;
+        padding: 0.9rem 0;
+        margin: -0.9rem 0;
+        color: var(--white);
+        text-decoration: none;
+      }
+
+      .legal__inner {
+        max-width: 42rem;
+        border-top: 2px solid var(--white);
+        padding-top: 1.25rem;
+      }
+
+      .legal__meta {
+        margin: 1rem 0 0;
+        color: #b5b3ad;
+      }
+
+      .legal__title {
+        margin: 0;
+        font-size: var(--heading-lg);
+        line-height: 1.05;
+      }
+
+      .legal__body {
+        margin-top: 1.75rem;
+        font-size: var(--text-body);
+        line-height: 1.6;
+        color: #b5b3ad;
+      }
+
+      .legal__body p {
+        margin: 0 0 1rem;
+      }
+
+      .legal__body h2 {
+        margin: 2rem 0 0.75rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: 1.25rem;
+        line-height: 1.3;
+        text-transform: uppercase;
+        color: var(--white);
+        letter-spacing: 0.04em;
+      }
+
+      .legal__body h2:first-of-type {
+        margin-top: 0;
+      }
+
+      .legal__body h3 {
+        margin: 1.5rem 0 0.5rem;
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--white);
+      }
+
+      .legal__body ul {
+        margin: 0 0 1rem;
+        padding-left: 1.25rem;
+      }
+
+      .legal__body li {
+        margin-bottom: 0.35rem;
+      }
+
+      .legal__body a {
+        color: var(--white);
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+        overflow-wrap: anywhere;
+      }
+
+      .legal__body code {
+        font-family: var(--font-mono);
+        font-size: 0.9em;
+        color: var(--white);
+      }
+
+      .legal__logo:focus-visible,
+      .legal__foot a:focus-visible,
+      .legal__body a:focus-visible {
+        outline: 2px solid var(--white);
+        outline-offset: 3px;
+      }
+
+      .legal__foot {
+        margin-top: auto;
+        color: #9a9a9a;
+      }
+
+      .legal__foot a {
+        display: inline-block;
+        padding: 0.75rem 0;
+        margin: -0.75rem 0;
+        color: #9a9a9a;
+        text-decoration: none;
+      }
+
+      .legal__foot a:hover {
+        color: var(--white);
+        text-decoration: underline;
+      }
+    </style>
+  </body>
+</html>
