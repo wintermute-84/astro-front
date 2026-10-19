@@ -54,11 +54,31 @@ test('3 wrong codes per email in 15 min lock out, summed across resends; correct
   assert.equal((await verifyCode(db, 'lid', r1.code!, ctx(T0 + 62))).ok, false, 'old code invalid after resend');
   // That was the 3rd failure → locked; the new correct code is refused.
   assert.deepEqual(await verifyCode(db, 'lid', r2.code!, ctx(T0 + 63)), { ok: false, reason: 'locked' });
-  assert.equal((await requestCode(db, 'a@x.io', 'lid3', ctx(T0 + 200))).code, null, 'no new codes while locked');
-  // Window over: new code works.
-  const r3 = await requestCode(db, 'a@x.io', 'lid4', ctx(T0 + OTP.FAIL_WINDOW_S + 70));
+  assert.deepEqual(await verifyCode(db, 'lid', '123456', ctx(T0 + 64)), { ok: false, reason: 'locked' }, 'this login id stays locked');
+  // Window over: the same login id works again with a fresh code.
+  const r3 = await resendCode(db, 'lid', ctx(T0 + OTP.FAIL_WINDOW_S + 70));
   assert.ok(r3.code);
-  assert.equal((await verifyCode(db, 'lid4', r3.code!, ctx(T0 + OTP.FAIL_WINDOW_S + 71))).ok, true);
+  assert.equal((await verifyCode(db, 'lid', r3.code!, ctx(T0 + OTP.FAIL_WINDOW_S + 71))).ok, true);
+});
+
+test('an attacker failing on their own login id does not lock the real user out; 10 per email does', async () => {
+  const db = testDb();
+  await allow(db, 'a@x.io');
+  const atk = await requestCode(db, 'a@x.io', 'attacker', ctx(T0));
+  const bad = atk.code === '000000' ? '111111' : '000000';
+  for (let i = 0; i < 3; i++) await verifyCode(db, 'attacker', bad, ctx(T0 + 1 + i));
+  assert.equal((await verifyCode(db, 'attacker', atk.code!, ctx(T0 + 5))).ok, false, 'attacker locked');
+  const real = await requestCode(db, 'a@x.io', 'victim', ctx(T0 + 61));
+  assert.ok(real.code, 'victim still gets a code');
+  assert.equal((await verifyCode(db, 'victim', real.code!, ctx(T0 + 62))).ok, true, 'victim logs in');
+
+  // Per-email ceiling: 10 failures across many login ids lock every login id of that email.
+  const db2 = testDb();
+  await allow(db2, 'b@x.io');
+  for (let i = 0; i < OTP.MAX_FAILS_PER_EMAIL; i++) {
+    await db2.prepare("INSERT INTO events (kind, subject, at, login_id) VALUES ('otp_fail', 'b@x.io', ?, ?)").bind(T0, `x${i}`).run();
+  }
+  assert.deepEqual(await requestCode(db2, 'b@x.io', 'fresh', ctx(T0 + 1)), { code: null, reason: 'locked' });
 });
 
 test('unknown login ids lock out the same way (no allowlist oracle)', async () => {

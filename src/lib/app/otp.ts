@@ -1,13 +1,20 @@
 // Email one-time codes for /app login. Pure functions over D1; routes pass env + clock.
 //   6 digits, 5-min TTL, one live code per email, bound to a login_id cookie nonce.
 //   Stored as HMAC-SHA256(OTP_PEPPER, "<login_id>:<code>"), compared in constant time.
-//   3 wrong codes per email in 15 min (summed across resends) → lockout.
+//   3 wrong codes per login id in 15 min (summed across resends) → lockout; 10 per email → lockout
+//   for every login id of that email.
 // Callers always answer generically: nothing here may change the HTTP response
 // depending on whether an email is allowlisted.
 
 export const OTP = {
   TTL_S: 300,
+  /** Wrong codes per login id (one browser's attempt, summed across its resends) → lockout. */
   MAX_FAILS: 3,
+  /**
+   * Wrong codes per email across all login ids. Higher than MAX_FAILS so someone who only knows an
+   * allowlisted address can't lock its owner out with 3 guesses of their own.
+   */
+  MAX_FAILS_PER_EMAIL: 10,
   FAIL_WINDOW_S: 900,
   RESEND_AFTER_S: 60,
   SENDS_PER_EMAIL_HOUR: 4,
@@ -82,7 +89,7 @@ export async function requestCode(db: D1Database, email: string, loginId: string
   await logEvent(db, 'login_req', email, ip, now).run();
   if (ipReqs >= OTP.REQUESTS_PER_IP_HOUR) return { code: null, reason: 'ip_cap' };
   if (!(await isAllowlisted(db, email))) return { code: null, reason: 'not_allowed' };
-  if ((await countEvents(db, 'otp_fail', 'subject', email, now - OTP.FAIL_WINDOW_S)) >= OTP.MAX_FAILS) return { code: null, reason: 'locked' };
+  if ((await countEvents(db, 'otp_fail', 'subject', email, now - OTP.FAIL_WINDOW_S)) >= OTP.MAX_FAILS_PER_EMAIL) return { code: null, reason: 'locked' };
   if ((await countEvents(db, 'otp_sent', 'subject', email, now - OTP.RESEND_AFTER_S)) > 0) return { code: null, reason: 'too_soon' };
   if ((await countEvents(db, 'otp_sent', 'subject', email, now - 3600)) >= OTP.SENDS_PER_EMAIL_HOUR) return { code: null, reason: 'email_cap' };
   if ((await mailsToday(db, now)) >= OTP.MAILS_PER_DAY) return { code: null, reason: 'daily_cap' };
@@ -121,16 +128,17 @@ export async function verifyCode(db: D1Database, loginId: string, code: string, 
     .prepare('SELECT email, code_hash, expires_at FROM otp_codes WHERE login_id = ?')
     .bind(loginId)
     .first<{ email: string; code_hash: string; expires_at: number }>();
-  // Unknown login ids get their own failure counter, so they lock out exactly like real ones.
+  // Unknown login ids count under a placeholder email, so they lock out exactly like real ones.
   const subject = row?.email ?? `lid:${loginId}`;
-  // Reserve a failure slot before comparing: atomic, so parallel guesses can't exceed MAX_FAILS.
-  // A correct code gives the slot back.
+  // Reserve a failure slot before comparing: one atomic statement checks both ceilings, so parallel
+  // guesses can't exceed them. A correct code gives the slot back.
   const slot = await db
     .prepare(
-      `INSERT INTO events (kind, subject, ip, at) SELECT 'otp_fail', ?1, ?2, ?3
-       WHERE (SELECT COUNT(*) FROM events WHERE kind = 'otp_fail' AND subject = ?1 AND at > ?4) < ?5`,
+      `INSERT INTO events (kind, subject, ip, at, login_id) SELECT 'otp_fail', ?1, ?2, ?3, ?4
+       WHERE (SELECT COUNT(*) FROM events WHERE kind = 'otp_fail' AND login_id = ?4 AND at > ?5) < ?6
+         AND (SELECT COUNT(*) FROM events WHERE kind = 'otp_fail' AND subject = ?1 AND at > ?5) < ?7`,
     )
-    .bind(subject, ip, now, now - OTP.FAIL_WINDOW_S, OTP.MAX_FAILS)
+    .bind(subject, ip, now, loginId, now - OTP.FAIL_WINDOW_S, OTP.MAX_FAILS, OTP.MAX_FAILS_PER_EMAIL)
     .run();
   if (slot.meta.changes !== 1) return { ok: false, reason: 'locked' };
 
@@ -143,9 +151,13 @@ export async function verifyCode(db: D1Database, loginId: string, code: string, 
       return { ok: true, email: row.email };
     }
   }
-  const fails = await countEvents(db, 'otp_fail', 'subject', subject, now - OTP.FAIL_WINDOW_S);
-  // Keep the row on lockout: it ties this login id to the email's counter (it expires on its own).
-  return { ok: false, reason: fails >= OTP.MAX_FAILS ? 'locked' : 'invalid' };
+  const since = now - OTP.FAIL_WINDOW_S;
+  const [byLogin, byEmail] = await Promise.all([
+    db.prepare("SELECT COUNT(*) AS n FROM events WHERE kind = 'otp_fail' AND login_id = ? AND at > ?").bind(loginId, since).first<number>('n'),
+    countEvents(db, 'otp_fail', 'subject', subject, since),
+  ]);
+  // Keep the code row on lockout: it ties this login id to the email (it expires on its own).
+  return { ok: false, reason: (byLogin ?? 0) >= OTP.MAX_FAILS || byEmail >= OTP.MAX_FAILS_PER_EMAIL ? 'locked' : 'invalid' };
 }
 
 /** Opportunistic cleanup (run after logins): expired codes and sessions, old events and rejected requests. */
