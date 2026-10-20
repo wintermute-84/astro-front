@@ -1,0 +1,50 @@
+---
+import { t, lines } from '../../i18n';
+
+const s = t(Astro.currentLocale);
+---
+
+<section class="section section--sharks" id="sharks">
+  <canvas class="sharks__canvas" aria-hidden="true"></canvas>
+  <span class="section__meta">{s.sharks_meta}</span>
+
+  <div class="section__inner">
+    <h2 class="heading-lg reveal">
+      {lines(s.sharks_h).map((l, i, all) => (i === all.length - 1 ? <span class="accent">{l}</span> : <>{l}<br /></>))}
+    </h2>
+  </div>
+</section>
+
+<style>
+  .section--sharks {
+    min-height: 45vh;
+    background: var(--black);
+    color: var(--white);
+    text-align: center;
+    align-items: center;
+  }
+  .sharks__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    font-family: var(--font-mono);
+  }
+  .section--sharks .section__inner {
+    pointer-events: none;
+    text-shadow: 0 0 2rem var(--black), 0 0 1rem var(--black);
+  }
+</style>
+
+<script>
+  import { OceanEngine } from '../../lib/ascii-sharks/engine';
+
+  const canvas = document.querySelector<HTMLCanvasElement>('.sharks__canvas');
+  if (canvas) new OceanEngine(canvas, [
+    { kind: 'hammerhead', size: 1 },
+    { kind: 'classic', size: 0.85 },
+    { kind: 'thresher', size: 0.8 },
+    { kind: 'stingray', size: 0.75 },
+  ]);
+</script>
