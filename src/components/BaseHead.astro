@@ -7,10 +7,12 @@ interface Props {
   description: string;
   image?: string;
   preloadHero?: boolean;
+  /** Hero image base path; expects -640/-960 .webp variants next to it. */
+  hero?: string;
 }
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const { title, description, image = '/HEAD.jpeg', preloadHero = false } = Astro.props;
+const { title, description, image = '/HEAD.jpeg', preloadHero = false, hero = '/LIGHT' } = Astro.props;
 ---
 
 <meta charset="utf-8" />
@@ -20,7 +22,7 @@ const { title, description, image = '/HEAD.jpeg', preloadHero = false } = Astro.
     rel="preload"
     as="image"
     type="image/webp"
-    imagesrcset="/LIGHT-640.webp 640w, /LIGHT-960.webp 960w, /LIGHT.webp 1400w"
+    imagesrcset={`${hero}-640.webp 640w, ${hero}-960.webp 960w, ${hero}.webp 1400w`}
     imagesizes="100vw"
     fetchpriority="high"
   />
