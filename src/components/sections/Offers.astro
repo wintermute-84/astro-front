@@ -45,16 +45,25 @@ const next = [
       ))}
     </div>
 
-    <p class="body-text offers-alt reveal">
-      {s.offers_alt}{' '}
-      <a href={localePath(locale, '/store/')} class="link">{s.offers_alt_link}</a>
-    </p>
+    <a class="offer offer--fork reveal" href={localePath(locale, '/store/')}>
+      <span class="offer__step">{s.offers_fork_step}</span>
+      <div class="offer__head">
+        <h3 class="offer__name">{s.offers_fork_name}</h3>
+      </div>
+      <p class="offer__text">{s.offers_fork_text}</p>
+      <span class="link">{s.offers_fork_link}</span>
+    </a>
   </div>
 </section>
 
 <style>
-  .offers-alt {
-    margin-top: 2.5rem;
-    max-width: 42rem;
+  .offer--fork {
+    display: block;
+    margin-top: 3rem;
+    color: inherit;
+  }
+  .offer--fork .link {
+    display: inline-block;
+    margin-top: 1.25rem;
   }
 </style>
