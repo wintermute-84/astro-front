@@ -1,5 +1,6 @@
 ---
 import { homePath, lines, t, type Locale } from '../../i18n';
+import SectionBg from '../SectionBg.astro';
 
 const locale = (Astro.currentLocale ?? 'en') as Locale;
 const s = t(locale);
@@ -10,7 +11,9 @@ const pkgs = [
 ];
 ---
 
-<section class="section store-hero" id="store">
+<section class="section section--hero store-hero" id="store">
+  <SectionBg jpg="/HEAD2.jpg" webp="/HEAD2.webp" webpSm="/HEAD2-960.webp" width={1400} height={901} priority />
+  <div class="section__overlay section__overlay--light"></div>
   <span class="section__meta">{s.store_hero_meta}</span>
   <div class="section__inner">
     <h1 class="heading-xl reveal">
@@ -90,8 +93,6 @@ const pkgs = [
   .store-hero {
     background: var(--paper);
     color: var(--black);
-    min-height: 88vh;
-    padding-top: 6rem;
   }
 
   .store-path {
