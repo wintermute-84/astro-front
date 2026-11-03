@@ -86,7 +86,7 @@ const en = {
   agency_meta: 'white-label',
   agency_h: 'YOUR CLIENT.|YOUR BRAND.',
   agency_lead_strong: 'Speed for your client, without the replatform pitch.',
-  agency_lead: 'We build the edge layer behind the scenes. You keep the relationship, the delivery lead and the credit.',
+  agency_lead: "Your client's backend and your design stay as they are. We build the edge layer behind the scenes; you keep the client, the retainer and the credit.",
   agency_btn: 'TALK WHITE-LABEL →',
   agency_note: 'Fixed scope. Clear handover.',
   sharks_meta: 'move over the water',
@@ -130,7 +130,7 @@ const en = {
   store_path_keep_link: 'SEE THE AUDIT →',
   store_path_new_h: 'REPLACE IT',
   store_path_new_text:
-    "No webshop yet. Or WooCommerce, Magento or old custom code is slow at its core, and keeping it costs more than moving. The new shop runs on Medusa: open source, and yours.",
+    "No webshop yet. Or WooCommerce, Magento or old custom code is slow at its core, and keeping it costs more than moving. The new shop is built on open-source technology you own outright: no platform lock-in, no platform fee on every sale.",
   store_path_rule: 'Not sure which? Tell us what you run. We\u2019ll say which path fits.',
   store_score_meta: 'measured, not promised',
   store_score_h: "SCORE 100.|FINE PRINT.",
@@ -139,7 +139,7 @@ const en = {
   store_score_p2:
     "We tune your home, category and product pages for that score, and the test runs again every time the shop is updated. Measured, not promised.",
   store_score_p3:
-    "Checkout loads the payment company’s own card form, so it sits outside the score. So do tracking and chat tools added later.",
+    "Your payment company's card form loads only at checkout, and tracking or chat tools load after the page is ready. Shoppers see a fast page first, whatever you add later.",
   store_scope_meta: "yours to keep · quoted per shop",
   store_scope_h: 'WHAT YOU GET.',
   store_scope_li1:
@@ -264,7 +264,7 @@ const fi: Strings = {
   agency_meta: "white label",
   agency_h: "ASIAK\u00ADKAASI.|BRÄNDISI.",
   agency_lead_strong: "Nopeutta asiakkaallesi ilman puhetta alustauudistuksesta.",
-  agency_lead: "Me rakennamme edge-kerroksen kulisseissa. Sinä pidät asiakassuhteen, projektinjohdon ja kunnian.",
+  agency_lead: "Asiakkaasi taustajärjestelmä ja teidän designinne pysyvät ennallaan. Me rakennamme edge-kerroksen kulisseissa, te pidätte asiakkaan, ylläpitosopimuksen ja kunnian.",
   agency_btn: "KYSY WHITE LABELISTA →",
   agency_note: "Kiinteä laajuus. Selkeä luovutus.",
   sharks_meta: "liikuta hiirtä veden yllä",
@@ -308,7 +308,7 @@ const fi: Strings = {
   store_path_keep_link: "KATSO VIIVEAUDIT →",
   store_path_new_h: "VAIHDA",
   store_path_new_text:
-    "Ei vielä verkkokauppaa. Tai WooCommerce, Magento tai vanha räätälöity ratkaisu on pohjimmiltaan hidas, ja sen pitäminen maksaa enemmän kuin siirtyminen. Uusi kauppa pyörii Medusalla: avointa lähdekoodia, ja sinun.",
+    "Ei vielä verkkokauppaa. Tai WooCommerce, Magento tai vanha räätälöity ratkaisu on pohjimmiltaan hidas, ja sen pitäminen maksaa enemmän kuin siirtyminen. Uusi kauppa rakennetaan avoimen lähdekoodin tekniikalle, joka on kokonaan sinun: ei sidontaa alustaan eikä alustamaksua jokaisesta myynnistä.",
   store_path_rule: "Etkö ole varma? Kerro, mitä käytät nyt. Kerromme, kumpi polku sopii.",
   store_score_meta: "mitattu, ei luvattu",
   store_score_h: "TULOS 100.|JA EHDOT.",
@@ -317,7 +317,7 @@ const fi: Strings = {
   store_score_p2:
     "Viritämme etusivun, kategoriasivut ja tuotesivut tähän tulokseen, ja testi ajetaan aina, kun kauppaa päivitetään. Mitattu, ei luvattu.",
   store_score_p3:
-    "Kassa lataa maksuyhtiön oman korttilomakkeen, joten se jää tuloksen ulkopuolelle. Samoin myöhemmin lisätyt seuranta- ja chat-työkalut.",
+    "Maksuyhtiön korttilomake latautuu vasta kassalla, ja seuranta- ja chat-työkalut vasta, kun sivu on valmis. Asiakas näkee ensin nopean sivun, vaikka lisäisit myöhemmin muuta.",
   store_scope_meta: "sinun omasi · tarjous kauppakohtaisesti",
   store_scope_h: "MITÄ SAAT.",
   store_scope_li1:
@@ -438,7 +438,7 @@ const sv: Strings = {
   agency_meta: "white label",
   agency_h: "DIN KUND.|DITT BRAND.",
   agency_lead_strong: "Fart åt din kund, utan att sälja in ett plattformsbyte.",
-  agency_lead: "Vi bygger edge-lagret bakom kulisserna. Du behåller kundrelationen, projektledningen och äran.",
+  agency_lead: "Kundens backend och er design förblir som de är. Vi bygger edge-lagret bakom kulisserna, ni behåller kunden, retainern och äran.",
   agency_btn: "PRATA WHITE LABEL →",
   agency_note: "Fast omfattning. Tydlig överlämning.",
   sharks_meta: "rör musen över vattnet",
@@ -482,7 +482,7 @@ const sv: Strings = {
   store_path_keep_link: "SE AUDITEN →",
   store_path_new_h: "BYT",
   store_path_new_text:
-    "Ingen webbshop än. Eller så är WooCommerce, Magento eller en gammal egenutvecklad lösning långsam i grunden, och att behålla den kostar mer än att flytta. Den nya butiken körs på Medusa: öppen källkod, och er egen.",
+    "Ingen webbshop än. Eller så är WooCommerce, Magento eller en gammal egenutvecklad lösning långsam i grunden, och att behålla den kostar mer än att flytta. Den nya butiken byggs på öppen källkod som ni äger helt: ingen inlåsning i en plattform och ingen plattformsavgift på varje köp.",
   store_path_rule: "Osäker? Berätta vad ni kör i dag, så säger vi vilket spår som passar.",
   store_score_meta: "uppmätt, inte utlovat",
   store_score_h: "BETYG 100.|FINSTILT.",
@@ -491,7 +491,7 @@ const sv: Strings = {
   store_score_p2:
     "Vi finjusterar startsida, kategorisidor och produktsidor för det betyget, och testet körs varje gång butiken uppdateras. Uppmätt, inte utlovat.",
   store_score_p3:
-    "Kassan laddar betalföretagets eget kortformulär och ligger därför utanför betyget. Det gör även spårnings- och chattverktyg som läggs till senare.",
+    "Betalföretagets kortformulär laddas först i kassan, och spårnings- och chattverktyg först när sidan är klar. Kunden ser en snabb sida först, vad ni än lägger till senare.",
   store_scope_meta: "er egen · offert per butik",
   store_scope_h: "DET HÄR FÅR NI.",
   store_scope_li1:
