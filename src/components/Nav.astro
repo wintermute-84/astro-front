@@ -32,6 +32,8 @@ const strippedPath = stripLocale(Astro.url.pathname);
     <a href="/signup/" class="nav__link">{s.nav_signup}</a>
     {onHome ? (
       <a href="#contact" class="nav__link" data-offer="audit">{s.nav_cta}</a>
+    ) : strippedPath === '/store/' ? (
+      <a href="#contact" class="nav__link" data-offer="store">{s.nav_cta_store}</a>
     ) : (
       <a href={`${homePath(locale)}#contact`} class="nav__link">{s.nav_cta}</a>
     )}
