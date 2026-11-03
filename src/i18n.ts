@@ -142,13 +142,15 @@ const en = {
   store_scope_meta: 'headless · edge · quoted per shop',
   store_scope_h: 'WHAT YOU GET.',
   store_scope_li1:
-    'Medusa v2 backend: catalog, cart, checkout, admin. Hosted on Medusa Cloud or servers you control.',
+    'Medusa v2 backend: catalog, cart, checkout, admin. Runs on Node, on Medusa Cloud or servers you control, not on Workers.',
   store_scope_li2:
-    'Storefront on Cloudflare Workers: static-first, one small script for cart and checkout. No third-party scripts on product pages.',
-  store_scope_li3: 'Catalog reads through our edge cache, purged the moment a product changes.',
-  store_scope_li4: 'Payments through Medusa providers: Stripe, with local methods scoped per shop.',
+    'Storefront on Cloudflare Workers. Product pages stay static, with no third-party scripts. Cart and checkout go through a small edge API and are never cached.',
+  store_scope_li3:
+    'Catalog reads through our edge cache. A product change purges its entry; stock and price stay cached only as long as we agree up front.',
+  store_scope_li4:
+    'Card payment through a Medusa provider, Stripe first, confirmed by webhooks. Local methods once we have tested them for your shop.',
   store_scope_li5:
-    'Migration from WooCommerce, Magento or custom: products, customers, order history, old URLs redirected.',
+    'Migration from WooCommerce, Magento or custom: products moved, old URLs redirected. Customers and order history when scoped for your shop.',
   store_pkg1_step: '01 · LAUNCH',
   store_pkg1_name: 'NO STORE YET',
   store_pkg1_text: 'Catalog, checkout, go-live. Scoped from your product list.',
@@ -315,13 +317,15 @@ const fi: Strings = {
   store_scope_meta: "headless · edge · tarjous kauppakohtaisesti",
   store_scope_h: "MITÄ SAAT.",
   store_scope_li1:
-    "Medusa v2 -taustajärjestelmä: tuotteet, ostoskori, kassa, hallinta. Medusa Cloudissa tai omilla palvelimillasi.",
+    "Medusa v2 -taustajärjestelmä: tuotteet, ostoskori, kassa, hallinta. Pyörii Nodella Medusa Cloudissa tai omilla palvelimillasi, ei Workersissa.",
   store_scope_li2:
-    "Verkkokauppa Cloudflare Workersilla: staattinen ensin, yksi pieni skripti ostoskorille ja kassalle. Ei kolmannen osapuolen skriptejä tuotesivuilla.",
-  store_scope_li3: "Tuotetiedot edge-välimuististamme, joka tyhjenee heti, kun tuote muuttuu.",
-  store_scope_li4: "Maksut Medusan maksupalveluiden kautta: Stripe, paikalliset maksutavat sovitaan kauppakohtaisesti.",
+    "Verkkokauppa Cloudflare Workersilla. Tuotesivut pysyvät staattisina, ilman kolmannen osapuolen skriptejä. Ostoskori ja kassa kulkevat pienen edge-API:n kautta, eikä niitä koskaan välimuistiteta.",
+  store_scope_li3:
+    "Tuotetiedot edge-välimuististamme. Tuotteen muutos tyhjentää sen tiedot; varasto ja hinta pysyvät välimuistissa vain sovitun ajan.",
+  store_scope_li4:
+    "Korttimaksu Medusan maksupalvelun kautta, ensin Stripe, vahvistus webhookeilla. Paikalliset maksutavat, kun olemme testanneet ne kauppasi kanssa.",
   store_scope_li5:
-    "Siirto WooCommercesta, Magentosta tai räätälöidystä ratkaisusta: tuotteet, asiakkaat, tilaushistoria, vanhat URL-osoitteet uudelleenohjattuina.",
+    "Siirto WooCommercesta, Magentosta tai räätälöidystä ratkaisusta: tuotteet siirretään, vanhat URL-osoitteet ohjataan uudelleen. Asiakkaat ja tilaushistoria, kun ne sovitaan kauppakohtaisesti.",
   store_pkg1_step: "01 · KÄYNNISTYS",
   store_pkg1_name: "EI VERKKOKAUPPAA",
   store_pkg1_text: "Tuotteet, kassa, julkaisu. Laajuus tuotevalikoimasi mukaan.",
@@ -484,13 +488,15 @@ const sv: Strings = {
   store_scope_meta: "headless · edge · offert per butik",
   store_scope_h: "DET HÄR FÅR NI.",
   store_scope_li1:
-    "Medusa v2-backend: katalog, varukorg, kassa, admin. På Medusa Cloud eller servrar ni själva styr över.",
+    "Medusa v2-backend: katalog, varukorg, kassa, admin. Körs på Node, på Medusa Cloud eller servrar ni själva styr över, inte på Workers.",
   store_scope_li2:
-    "Webbshop på Cloudflare Workers: statiskt först, ett litet skript för varukorg och kassa. Inga tredjepartsskript på produktsidor.",
-  store_scope_li3: "Katalogläsning via vår edge-cache, rensas i samma ögonblick som en produkt ändras.",
-  store_scope_li4: "Betalning via Medusas betalleverantörer: Stripe, lokala metoder enligt överenskommelse per butik.",
+    "Webbshop på Cloudflare Workers. Produktsidorna förblir statiska, utan tredjepartsskript. Varukorg och kassa går via ett litet edge-API och cachas aldrig.",
+  store_scope_li3:
+    "Katalogläsning via vår edge-cache. En produktändring rensar dess post; lager och pris cachas bara så länge vi kommer överens om i förväg.",
+  store_scope_li4:
+    "Kortbetalning via en Medusa-leverantör, Stripe först, bekräftad med webhooks. Lokala metoder när vi har testat dem för er butik.",
   store_scope_li5:
-    "Flytt från WooCommerce, Magento eller egenutvecklat: produkter, kunder, orderhistorik, gamla URL:er omdirigerade.",
+    "Flytt från WooCommerce, Magento eller egenutvecklat: produkter flyttas, gamla URL:er omdirigeras. Kunder och orderhistorik när det avgränsas för er butik.",
   store_pkg1_step: "01 · LANSERING",
   store_pkg1_name: "INGEN WEBBSHOP",
   store_pkg1_text: "Katalog, kassa, go-live. Avgränsat utifrån er produktlista.",
