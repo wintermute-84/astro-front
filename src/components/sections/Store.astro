@@ -6,9 +6,9 @@ import { MAIN_ORIGIN } from '../../lib/storeHost';
 const locale = (Astro.currentLocale ?? 'en') as Locale;
 const s = t(locale);
 const pkgs = [
-  { step: s.store_pkg1_step, name: s.store_pkg1_name, text: s.store_pkg1_text },
-  { step: s.store_pkg2_step, name: s.store_pkg2_name, text: s.store_pkg2_text },
-  { step: s.store_pkg3_step, name: s.store_pkg3_name, text: s.store_pkg3_text },
+  { step: s.store_pkg1_step, name: s.store_pkg1_name, from: s.store_pkg1_for, get: s.store_pkg1_get },
+  { step: s.store_pkg2_step, name: s.store_pkg2_name, from: s.store_pkg2_for, get: s.store_pkg2_get },
+  { step: s.store_pkg3_step, name: s.store_pkg3_name, from: s.store_pkg3_for, get: s.store_pkg3_get },
 ];
 ---
 
@@ -78,7 +78,12 @@ const pkgs = [
           <div class="offer__head">
             <h3 class="offer__name">{pkg.name}</h3>
           </div>
-          <p class="offer__text">{pkg.text}</p>
+          <dl class="offer__text store-pkg">
+            <dt class="offer__step">{s.store_pkg_for_lbl}</dt>
+            <dd>{pkg.from}</dd>
+            <dt class="offer__step">{s.store_pkg_get_lbl}</dt>
+            <dd>{pkg.get}</dd>
+          </dl>
         </div>
       ))}
     </div>
@@ -142,6 +147,14 @@ const pkgs = [
 
   .store-scope .section__meta {
     opacity: 1;
+  }
+
+  .store-pkg dd {
+    margin: 0.2rem 0 0.75rem;
+  }
+
+  .store-pkg dd:last-child {
+    margin-bottom: 0;
   }
 
   .store-scope .offer__head {
