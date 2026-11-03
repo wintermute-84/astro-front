@@ -1,15 +1,19 @@
 ---
 import { SITE_TITLE } from '../consts';
 import { LOCALES, homePath, localePath, stripLocale, t, type Locale } from '../i18n';
+import { MAIN_ORIGIN } from '../lib/storeHost';
 
 const locale = (Astro.currentLocale ?? 'en') as Locale;
 const s = t(locale);
 const onHome = stripLocale(Astro.url.pathname) === '/';
 const strippedPath = stripLocale(Astro.url.pathname);
+// The store page lives on store.3dreamlab.com: main-site links go absolute, language links stay on that host.
+const onStore = strippedPath === '/store/';
+const main = onStore ? MAIN_ORIGIN : '';
 ---
 
 <nav class="nav" id="nav">
-  <a href={homePath(locale)} class="nav__logo">{SITE_TITLE.toUpperCase()}</a>
+  <a href={main + homePath(locale)} class="nav__logo">{SITE_TITLE.toUpperCase()}</a>
   <div class="nav__right">
     <div class="nav__lang-switch" id="lang-switch">
       <button type="button" class="nav__globe" aria-expanded="false" aria-controls="nav-langs" aria-label={s.lang_switch_label}>
@@ -22,17 +26,17 @@ const strippedPath = stripLocale(Astro.url.pathname);
       <ul class="nav__langs" id="nav-langs" inert>
         {LOCALES.map((l) => (
           <li>
-            <a href={localePath(l, strippedPath)} hreflang={l} lang={l} class="nav__lang" aria-current={l === locale ? 'page' : undefined}>
+            <a href={onStore ? homePath(l) : localePath(l, strippedPath)} hreflang={l} lang={l} class="nav__lang" aria-current={l === locale ? 'page' : undefined}>
               {l.toUpperCase()}
             </a>
           </li>
         ))}
       </ul>
     </div>
-    <a href="/signup/" class="nav__link">{s.nav_signup}</a>
+    <a href={`${main}/signup/`} class="nav__link">{s.nav_signup}</a>
     {onHome ? (
       <a href="#contact" class="nav__link" data-offer="audit">{s.nav_cta}</a>
-    ) : strippedPath === '/store/' ? (
+    ) : onStore ? (
       <a href="#contact" class="nav__link" data-offer="store">{s.nav_cta_store}</a>
     ) : (
       <a href={`${homePath(locale)}#contact`} class="nav__link">{s.nav_cta}</a>

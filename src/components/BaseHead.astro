@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
-import { LOCALES, localePath, stripLocale, t } from '../i18n';
+import { LOCALES, homePath, localePath, stripLocale, t, type Locale } from '../i18n';
+import { STORE_ORIGIN } from '../lib/storeHost';
 
 interface Props {
   title: string;
@@ -11,7 +12,12 @@ interface Props {
   hero?: string;
 }
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const path = stripLocale(Astro.url.pathname);
+// The store pages are built under /store/ but served at the root of store.3dreamlab.com.
+const onStore = path === '/store/';
+const href = (l: Locale | 'x') =>
+  onStore ? new URL(homePath(l === 'x' ? 'en' : l), STORE_ORIGIN) : new URL(l === 'x' ? path : localePath(l, path), Astro.site);
+const canonicalURL = onStore ? href((Astro.currentLocale ?? 'en') as Locale) : new URL(Astro.url.pathname, Astro.site);
 const { title, description, image = '/HEAD.jpeg', preloadHero = false, hero = '/LIGHT' } = Astro.props;
 ---
 
@@ -32,21 +38,19 @@ const { title, description, image = '/HEAD.jpeg', preloadHero = false, hero = '/
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <meta name="generator" content={Astro.generator} />
 <link rel="canonical" href={canonicalURL} />
-{LOCALES.map((l) => (
-  <link rel="alternate" hreflang={l} href={new URL(localePath(l, stripLocale(Astro.url.pathname)), Astro.site)} />
-))}
-<link rel="alternate" hreflang="x-default" href={new URL(stripLocale(Astro.url.pathname), Astro.site)} />
+{LOCALES.map((l) => <link rel="alternate" hreflang={l} href={href(l)} />)}
+<link rel="alternate" hreflang="x-default" href={href('x')} />
 <title>{title}</title>
 <meta name="title" content={title} />
 <meta name="description" content={description} />
 <meta property="og:type" content="website" />
 <meta property="og:locale" content={t(Astro.currentLocale).og_locale} />
-<meta property="og:url" content={Astro.url} />
+<meta property="og:url" content={canonicalURL} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={new URL(image, Astro.url)} />
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content={Astro.url} />
+<meta property="twitter:url" content={canonicalURL} />
 <meta property="twitter:title" content={title} />
 <meta property="twitter:description" content={description} />
 <meta property="twitter:image" content={new URL(image, Astro.url)} />

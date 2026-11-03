@@ -1,4 +1,5 @@
 ---
+import { MAIN_ORIGIN } from '../lib/storeHost';
 import { t } from '../i18n';
 
 const s = t(Astro.currentLocale);
@@ -8,8 +9,8 @@ const s = t(Astro.currentLocale);
   <span>© {new Date().getFullYear()} 3DreamLab · {s.footer_country}</span>
   <span>{s.footer_privacy}</span>
   <nav class="footer__links" aria-label="Legal">
-    <a href="/privacy/" hreflang="en">{s.footer_privacy_link}</a>
-    <a href="/terms/" hreflang="en">{s.footer_terms_link}</a>
+    <a href={`${MAIN_ORIGIN}/privacy/`} hreflang="en">{s.footer_privacy_link}</a>
+    <a href={`${MAIN_ORIGIN}/terms/`} hreflang="en">{s.footer_terms_link}</a>
   </nav>
 </footer>
 

@@ -1,5 +1,6 @@
 ---
-import { t, lines, localePath, type Locale } from '../../i18n';
+import { t, lines, homePath, type Locale } from '../../i18n';
+import { STORE_ORIGIN } from '../../lib/storeHost';
 
 const locale = (Astro.currentLocale ?? 'en') as Locale;
 const s = t(Astro.currentLocale);
@@ -45,7 +46,7 @@ const next = [
       ))}
     </div>
 
-    <a class="offer offer--fork reveal" href={localePath(locale, '/store/')}>
+    <a class="offer offer--fork reveal" href={STORE_ORIGIN + homePath(locale)}>
       <span class="offer__step">{s.offers_fork_step}</span>
       <div class="offer__head">
         <h3 class="offer__name">{s.offers_fork_name}</h3>

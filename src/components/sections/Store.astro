@@ -1,6 +1,7 @@
 ---
 import { homePath, lines, t, type Locale } from '../../i18n';
 import SectionBg from '../SectionBg.astro';
+import { MAIN_ORIGIN } from '../../lib/storeHost';
 
 const locale = (Astro.currentLocale ?? 'en') as Locale;
 const s = t(locale);
@@ -37,7 +38,7 @@ const pkgs = [
       <div class="store-path__col">
         <h3 class="offer__name">{s.store_path_keep_h}</h3>
         <p class="body-text">{s.store_path_keep_text}</p>
-        <a href={`${homePath(locale)}#offers`} class="link">{s.store_path_keep_link}</a>
+        <a href={`${MAIN_ORIGIN}${homePath(locale)}#offers`} class="link">{s.store_path_keep_link}</a>
       </div>
       <div class="store-path__col">
         <h3 class="offer__name">{s.store_path_new_h}</h3>

@@ -8,8 +8,8 @@ export default defineConfig({
   site: "https://3dreamlab.com",
   integrations: [
     react(),
-    // /demo stays unlisted (noindex, no nav link) until the owner's first-audit gate.
-    sitemap({ filter: (page) => !/^\/(dashboard|demo|denied|app)(\/|$)/.test(new URL(page).pathname) }),
+    // /store/ is served from store.3dreamlab.com. /demo stays unlisted (noindex, no nav link) until the owner's first-audit gate.
+    sitemap({ filter: (page) => !/^\/((fi|sv)\/)?(dashboard|demo|denied|app|store)(\/|$)/.test(new URL(page).pathname) }),
   ],
   build: { inlineStylesheets: "always" },
   session: false,
