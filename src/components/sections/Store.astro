@@ -1,0 +1,148 @@
+---
+import { homePath, lines, t, type Locale } from '../../i18n';
+
+const locale = (Astro.currentLocale ?? 'en') as Locale;
+const s = t(locale);
+const pkgs = [
+  { step: s.store_pkg1_step, name: s.store_pkg1_name, text: s.store_pkg1_text },
+  { step: s.store_pkg2_step, name: s.store_pkg2_name, text: s.store_pkg2_text },
+  { step: s.store_pkg3_step, name: s.store_pkg3_name, text: s.store_pkg3_text },
+];
+---
+
+<section class="section store-hero" id="store">
+  <span class="section__meta">{s.store_hero_meta}</span>
+  <div class="section__inner">
+    <h1 class="heading-xl reveal">
+      {lines(s.store_hero_h).map((l, i, all) => (i === all.length - 1 ? <span class="accent">{l}</span> : <>{l}<br /></>))}
+    </h1>
+    <p class="body-text reveal">
+      <strong>{s.store_hero_lead_strong}</strong> {s.store_hero_lead}
+    </p>
+    <div class="actions reveal">
+      <a href="#contact" class="btn btn--dark" data-offer="store">{s.store_hero_btn}</a>
+      <a href="#path" class="link">{s.store_hero_link}</a>
+    </div>
+  </div>
+</section>
+
+<section class="section store-path" id="path">
+  <span class="section__meta">{s.store_path_meta}</span>
+  <div class="section__inner">
+    <h2 class="heading-lg reveal">{lines(s.store_path_h).map((l, i) => <>{i > 0 && <br />}{l}</>)}</h2>
+    <div class="store-path__grid reveal">
+      <div class="store-path__col">
+        <h3 class="offer__name">{s.store_path_keep_h}</h3>
+        <p class="body-text">{s.store_path_keep_text}</p>
+        <a href={`${homePath(locale)}#offers`} class="link">{s.store_path_keep_link}</a>
+      </div>
+      <div class="store-path__col">
+        <h3 class="offer__name">{s.store_path_new_h}</h3>
+        <p class="body-text">{s.store_path_new_text}</p>
+      </div>
+    </div>
+    <p class="body-text store-path__rule reveal">{s.store_path_rule}</p>
+  </div>
+</section>
+
+<section class="section store-score" id="score">
+  <span class="section__meta">{s.store_score_meta}</span>
+  <div class="section__inner">
+    <h2 class="heading-lg reveal">{lines(s.store_score_h).map((l, i) => <>{i > 0 && <br />}{l}</>)}</h2>
+    <p class="body-text reveal">{s.store_score_p1}</p>
+    <p class="body-text reveal">{s.store_score_p2}</p>
+    <p class="body-text reveal">{s.store_score_p3}</p>
+  </div>
+</section>
+
+<section class="section store-scope" id="scope">
+  <span class="section__meta">{s.store_scope_meta}</span>
+  <div class="section__inner">
+    <h2 class="heading-lg reveal">{lines(s.store_scope_h).map((l, i) => <>{i > 0 && <br />}{l}</>)}</h2>
+    <ul class="offer__list reveal">
+      <li>{s.store_scope_li1}</li>
+      <li>{s.store_scope_li2}</li>
+      <li>{s.store_scope_li3}</li>
+      <li>{s.store_scope_li4}</li>
+      <li>{s.store_scope_li5}</li>
+    </ul>
+
+    <div class="offer-row reveal">
+      {pkgs.map((pkg) => (
+        <div class="offer">
+          <span class="offer__step">{pkg.step}</span>
+          <div class="offer__head">
+            <h3 class="offer__name">{pkg.name}</h3>
+          </div>
+          <p class="offer__text">{pkg.text}</p>
+        </div>
+      ))}
+    </div>
+
+    <div class="actions reveal">
+      <a href="#contact" class="btn btn--dark" data-offer="store">{s.store_pkg_btn}</a>
+      <span class="offer__note">{s.store_pkg_note}</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .store-hero {
+    background: var(--paper);
+    color: var(--black);
+    min-height: 88vh;
+    padding-top: 6rem;
+  }
+
+  .store-path {
+    background: var(--black);
+    color: var(--white);
+  }
+
+  .store-path__grid {
+    display: grid;
+    gap: 2.5rem;
+    margin-top: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .store-path__grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+    }
+  }
+
+  .store-path__col .body-text {
+    margin: 0.75rem 0 1rem;
+    color: var(--gray);
+  }
+
+  .store-path__rule {
+    margin-top: 2.5rem;
+    color: var(--gray);
+  }
+
+  .store-score {
+    background: var(--paper);
+    color: var(--black);
+  }
+
+  .store-score .body-text {
+    max-width: 42rem;
+  }
+
+  .store-scope {
+    background: var(--red);
+    color: var(--black);
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+
+  .store-scope .section__meta {
+    opacity: 1;
+  }
+
+  .store-scope .offer__head {
+    margin-bottom: 0.25rem;
+  }
+</style>

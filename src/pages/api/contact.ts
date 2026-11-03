@@ -18,6 +18,7 @@ const OFFERS: Record<string, string> = {
   build: 'Edge read layer',
   ops: 'Edge ops',
   agency: 'White-label / agency',
+  store: 'Headless store',
 };
 
 function json(data: Record<string, unknown>, status = 200) {

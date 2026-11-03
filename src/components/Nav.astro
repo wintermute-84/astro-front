@@ -1,9 +1,11 @@
 ---
 import { SITE_TITLE } from '../consts';
-import { LOCALES, homePath, t, type Locale } from '../i18n';
+import { LOCALES, homePath, localePath, stripLocale, t, type Locale } from '../i18n';
 
 const locale = (Astro.currentLocale ?? 'en') as Locale;
 const s = t(locale);
+const onHome = stripLocale(Astro.url.pathname) === '/';
+const strippedPath = stripLocale(Astro.url.pathname);
 ---
 
 <nav class="nav" id="nav">
@@ -20,7 +22,7 @@ const s = t(locale);
       <ul class="nav__langs" id="nav-langs" inert>
         {LOCALES.map((l) => (
           <li>
-            <a href={homePath(l)} hreflang={l} lang={l} class="nav__lang" aria-current={l === locale ? 'page' : undefined}>
+            <a href={localePath(l, strippedPath)} hreflang={l} lang={l} class="nav__lang" aria-current={l === locale ? 'page' : undefined}>
               {l.toUpperCase()}
             </a>
           </li>
@@ -28,7 +30,11 @@ const s = t(locale);
       </ul>
     </div>
     <a href="/signup/" class="nav__link">{s.nav_signup}</a>
-    <a href="#contact" class="nav__link" data-offer="audit">{s.nav_cta}</a>
+    {onHome ? (
+      <a href="#contact" class="nav__link" data-offer="audit">{s.nav_cta}</a>
+    ) : (
+      <a href={`${homePath(locale)}#contact`} class="nav__link">{s.nav_cta}</a>
+    )}
   </div>
 </nav>
 

@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { LOCALES, homePath, t } from '../i18n';
+import { LOCALES, localePath, stripLocale, t } from '../i18n';
 
 interface Props {
   title: string;
@@ -30,8 +30,10 @@ const { title, description, image = '/HEAD.jpeg', preloadHero = false } = Astro.
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <meta name="generator" content={Astro.generator} />
 <link rel="canonical" href={canonicalURL} />
-{LOCALES.map((l) => <link rel="alternate" hreflang={l} href={new URL(homePath(l), Astro.site)} />)}
-<link rel="alternate" hreflang="x-default" href={new URL('/', Astro.site)} />
+{LOCALES.map((l) => (
+  <link rel="alternate" hreflang={l} href={new URL(localePath(l, stripLocale(Astro.url.pathname)), Astro.site)} />
+))}
+<link rel="alternate" hreflang="x-default" href={new URL(stripLocale(Astro.url.pathname), Astro.site)} />
 <title>{title}</title>
 <meta name="title" content={title} />
 <meta name="description" content={description} />

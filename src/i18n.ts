@@ -111,6 +111,64 @@ const en = {
   footer_privacy: 'Form data is used only to reply to you, never shared.',
   footer_privacy_link: 'Privacy',
   footer_terms_link: 'Terms',
+  store_meta_title: 'Headless store on the edge | 3DreamLab',
+  store_meta_description:
+    'Headless Medusa backend and a storefront on Cloudflare Workers, built for Lighthouse 100. For mid-sized shops with no webshop yet, or a slow one. Contact us.',
+  store_hero_meta: 'for mid-sized shops · the other path',
+  store_hero_h: 'LOADS BEFORE|THEY BLINK.',
+  store_hero_lead_strong: 'Headless Medusa behind. Edge storefront in front.',
+  store_hero_lead:
+    'For shops with no webshop yet, or one that is slow at its core. Built on the same stack as this site, which scores Lighthouse 100.',
+  store_hero_btn: 'CONTACT US →',
+  store_hero_link: 'KEEP OR REPLACE? ↓',
+  store_path_meta: 'two paths · one goal',
+  store_path_h: 'KEEP IT|OR REPLACE IT.',
+  store_path_keep_h: 'KEEP IT',
+  store_path_keep_text:
+    'Your platform stays. We put an edge layer in front of the slow stock, price and catalog reads. The audit shows what can move.',
+  store_path_keep_link: 'SEE THE AUDIT →',
+  store_path_new_h: 'REPLACE IT',
+  store_path_new_text:
+    'No webshop yet. Or WooCommerce, Magento or old custom code is slow at its core, and keeping it costs more than moving. Medusa behind, an edge storefront in front.',
+  store_path_rule: 'Not sure which? Tell us what you run. We\u2019ll say which path fits.',
+  store_score_meta: 'measured, not promised',
+  store_score_h: 'SCORE 100.|THE FINE PRINT.',
+  store_score_p1:
+    'This site runs on the same stack and scores 100 in all four Lighthouse categories on mobile. That proves the stack, not your store.',
+  store_score_p2:
+    'We build your home, category and product pages for 100, and Lighthouse CI checks them on every deploy.',
+  store_score_p3:
+    'Checkout runs third-party payment widgets and sits outside the score. So do trackers and chat widgets added later.',
+  store_scope_meta: 'headless · edge · quoted per shop',
+  store_scope_h: 'WHAT YOU GET.',
+  store_scope_li1:
+    'Medusa v2 backend: catalog, cart, checkout, admin. Hosted on Medusa Cloud or servers you control.',
+  store_scope_li2:
+    'Storefront on Cloudflare Workers: static-first, one small script for cart and checkout. No third-party scripts on product pages.',
+  store_scope_li3: 'Catalog reads through our edge cache, purged the moment a product changes.',
+  store_scope_li4: 'Payments through Medusa providers: Stripe, with local methods scoped per shop.',
+  store_scope_li5:
+    'Migration from WooCommerce, Magento or custom: products, customers, order history, old URLs redirected.',
+  store_pkg1_step: '01 · LAUNCH',
+  store_pkg1_name: 'NO STORE YET',
+  store_pkg1_text: 'Catalog, checkout, go-live. Scoped from your product list.',
+  store_pkg2_step: '02 · MIGRATE',
+  store_pkg2_name: 'SLOW STORE',
+  store_pkg2_text: 'Same products, new engine, old URLs kept. Parallel run before cut-over.',
+  store_pkg3_step: '03 · OPERATE',
+  store_pkg3_name: 'KEEP IT FAST',
+  store_pkg3_text: 'Edge Ops plus Medusa upkeep: updates, monitoring, agreed incident cover.',
+  store_pkg_note: 'Scoped and quoted per shop.',
+  store_pkg_btn: 'CONTACT US →',
+  store_contact_h: 'TELL US|ABOUT THE SHOP.',
+  store_contact_intro:
+    'What you sell, what runs it today (or nothing yet), and where it hurts.',
+  store_contact_message: "What's the shop?",
+  store_contact_placeholder:
+    'e.g. WooCommerce, 3,000 products, product pages take 3 s on mobile.',
+  form_opt_store: 'Headless store',
+  offers_alt: 'No webshop yet, or the platform itself is the slow part?',
+  offers_alt_link: 'THE OTHER PATH: HEADLESS STORE →',
   meta_title: 'Slow API. Fast Edge. | 3DreamLab',
   meta_description:
     '€990 latency audits and fixed-scope edge read layers for slow stock, price and PIM APIs. For agencies and B2B teams.',
@@ -226,6 +284,62 @@ const fi: Strings = {
   footer_privacy: "Lomakkeen tietoja käytetään vain vastaamiseen, eikä niitä koskaan jaeta eteenpäin.",
   footer_privacy_link: "Tietosuoja (EN)",
   footer_terms_link: "Käyttöehdot (EN)",
+  store_meta_title: "Headless store edgellä | 3DreamLab",
+  store_meta_description:
+    "Headless Medusa taustalla ja verkkokaupan etupää Cloudflare Workersilla, rakennettu Lighthouse 100 -tulokseen. Keskikokoisille kaupoille, joilla ei ole vielä verkkokauppaa tai nykyinen on hidas. Ota yhteyttä.",
+  store_hero_meta: "keskikokoisille kaupoille · toinen polku",
+  store_hero_h: "AUKEAA|HETI.",
+  store_hero_lead_strong: "Headless Medusa takana. Edge-verkkokauppa edessä.",
+  store_hero_lead:
+    "Kaupoille, joilla ei ole vielä verkkokauppaa tai joiden nykyinen alusta on pohjimmiltaan hidas. Rakennettu samalle pinolle kuin tämä sivusto, jonka Lighthouse-tulos on 100.",
+  store_hero_btn: "OTA YHTEYTTÄ →",
+  store_hero_link: "PIDÄ VAI VAIHDA? ↓",
+  store_path_meta: "kaksi polkua · yksi tavoite",
+  store_path_h: "PIDÄ VANHA|TAI VAIHDA.",
+  store_path_keep_h: "PIDÄ VANHA",
+  store_path_keep_text:
+    "Alustasi pysyy. Laitamme edge-kerroksen hitaiden varasto-, hinta- ja tuotetietohakujen eteen. Viiveaudit kertoo, mitä voi siirtää.",
+  store_path_keep_link: "KATSO VIIVEAUDIT →",
+  store_path_new_h: "VAIHDA",
+  store_path_new_text:
+    "Ei vielä verkkokauppaa. Tai WooCommerce, Magento tai vanha räätälöity ratkaisu on pohjimmiltaan hidas, ja sen pitäminen maksaa enemmän kuin siirtyminen. Medusa taustalla, edge-verkkokauppa edessä.",
+  store_path_rule: "Etkö ole varma? Kerro, mitä käytät nyt. Kerromme, kumpi polku sopii.",
+  store_score_meta: "mitattu, ei luvattu",
+  store_score_h: "TULOS 100.|JA EHDOT.",
+  store_score_p1:
+    "Tämä sivusto pyörii samalla pinolla ja saa mobiilissa 100 kaikissa neljässä Lighthouse-kategoriassa. Se todistaa pinon, ei vielä sinun kauppaasi.",
+  store_score_p2:
+    "Rakennamme etusivun, kategoriasivut ja tuotesivut tavoitteena 100, ja Lighthouse CI tarkistaa ne jokaisen julkaisun yhteydessä.",
+  store_score_p3:
+    "Kassa käyttää kolmannen osapuolen maksukomponentteja, eikä se kuulu tulokseen. Sama koskee myöhemmin lisättyjä seurantaskriptejä ja chat-widgettejä.",
+  store_scope_meta: "headless · edge · tarjous kauppakohtaisesti",
+  store_scope_h: "MITÄ SAAT.",
+  store_scope_li1:
+    "Medusa v2 -taustajärjestelmä: tuotteet, ostoskori, kassa, hallinta. Medusa Cloudissa tai omilla palvelimillasi.",
+  store_scope_li2:
+    "Verkkokauppa Cloudflare Workersilla: staattinen ensin, yksi pieni skripti ostoskorille ja kassalle. Ei kolmannen osapuolen skriptejä tuotesivuilla.",
+  store_scope_li3: "Tuotetiedot edge-välimuististamme, joka tyhjenee heti, kun tuote muuttuu.",
+  store_scope_li4: "Maksut Medusan maksupalveluiden kautta: Stripe, paikalliset maksutavat sovitaan kauppakohtaisesti.",
+  store_scope_li5:
+    "Siirto WooCommercesta, Magentosta tai räätälöidystä ratkaisusta: tuotteet, asiakkaat, tilaushistoria, vanhat URL-osoitteet uudelleenohjattuina.",
+  store_pkg1_step: "01 · KÄYNNISTYS",
+  store_pkg1_name: "EI VERKKOKAUPPAA",
+  store_pkg1_text: "Tuotteet, kassa, julkaisu. Laajuus tuotevalikoimasi mukaan.",
+  store_pkg2_step: "02 · SIIRTO",
+  store_pkg2_name: "HIDAS KAUPPA",
+  store_pkg2_text: "Samat tuotteet, uusi moottori, vanhat osoitteet säilyvät. Rinnakkaisajo ennen vaihtoa.",
+  store_pkg3_step: "03 · YLLÄPITO",
+  store_pkg3_name: "PIDÄ NOPEANA",
+  store_pkg3_text: "Edge Ops plus Medusa-ylläpito: päivitykset, valvonta, sovittu häiriöpäivystys.",
+  store_pkg_note: "Laajuus ja tarjous kauppakohtaisesti.",
+  store_pkg_btn: "OTA YHTEYTTÄ →",
+  store_contact_h: "KERRO|KAUPASTA.",
+  store_contact_intro: "Mitä myyt, millä kauppa pyörii nyt (tai ei vielä millään) ja missä kenkä puristaa.",
+  store_contact_message: "Kerro kaupasta",
+  store_contact_placeholder: "esim. WooCommerce, 3 000 tuotetta, tuotesivut 3 s mobiilissa.",
+  form_opt_store: "Headless store",
+  offers_alt: "Ei vielä verkkokauppaa, tai onko hidas osa itse alusta?",
+  offers_alt_link: "TOINEN POLKU: HEADLESS STORE →",
   meta_title: "Hidas API. Nopea edge. | 3DreamLab",
   meta_description: "Viiveauditit 990 € ja kiinteän laajuuden edge-lukukerrokset hitaille varastosaldo-, hinta- ja PIM-API:ille. Toimistoille ja B2B-tiimeille.",
   lang_switch_label: "Kieli",
@@ -339,6 +453,62 @@ const sv: Strings = {
   footer_privacy: "Formulärdata används bara för att svara dig, delas aldrig vidare.",
   footer_privacy_link: "Integritet (EN)",
   footer_terms_link: "Villkor (EN)",
+  store_meta_title: "Headless store på edge | 3DreamLab",
+  store_meta_description:
+    "Headless Medusa i backend och en webbshop på Cloudflare Workers, byggd för Lighthouse 100. För medelstora butiker utan webbshop än, eller med en långsam. Kontakta oss.",
+  store_hero_meta: "för medelstora butiker · det andra spåret",
+  store_hero_h: "LADDAR|DIREKT.",
+  store_hero_lead_strong: "Headless Medusa bakom. Edge-webbshop framför.",
+  store_hero_lead:
+    "För butiker utan webbshop än, eller där plattformen i grunden är seg. Byggd på samma stack som den här sidan, som får Lighthouse 100.",
+  store_hero_btn: "KONTAKTA OSS →",
+  store_hero_link: "BEHÅLL ELLER BYT? ↓",
+  store_path_meta: "två spår · ett mål",
+  store_path_h: "BEHÅLL|ELLER BYT.",
+  store_path_keep_h: "BEHÅLL",
+  store_path_keep_text:
+    "Din plattform stannar. Vi lägger ett edge-lager framför sega lager-, pris- och katalogläsningar. Latensauditen visar vad som kan flyttas.",
+  store_path_keep_link: "SE AUDITEN →",
+  store_path_new_h: "BYT",
+  store_path_new_text:
+    "Ingen webbshop än. Eller så är WooCommerce, Magento eller en gammal egenutvecklad lösning seg i grunden, och att behålla den kostar mer än att flytta. Medusa bakom, edge-webbshop framför.",
+  store_path_rule: "Osäker? Berätta vad ni kör i dag, så säger vi vilket spår som passar.",
+  store_score_meta: "uppmätt, inte utlovat",
+  store_score_h: "BETYG 100.|DET FINSTILTA.",
+  store_score_p1:
+    "Den här sidan kör samma stack och får 100 i alla fyra Lighthouse-kategorier på mobil. Det bevisar stacken, inte er butik.",
+  store_score_p2:
+    "Vi bygger startsida, kategorisidor och produktsidor för 100, och Lighthouse CI kontrollerar dem vid varje release.",
+  store_score_p3:
+    "Kassan kör betalwidgetar från tredje part och ligger utanför poängen. Det gäller också spårare och chattwidgetar som läggs till senare.",
+  store_scope_meta: "headless · edge · offert per butik",
+  store_scope_h: "DET HÄR FÅR NI.",
+  store_scope_li1:
+    "Medusa v2-backend: katalog, varukorg, kassa, admin. På Medusa Cloud eller servrar ni själva styr över.",
+  store_scope_li2:
+    "Webbshop på Cloudflare Workers: statiskt först, ett litet skript för varukorg och kassa. Inga tredjepartsskript på produktsidor.",
+  store_scope_li3: "Katalogläsning via vår edge-cache, rensas i samma ögonblick som en produkt ändras.",
+  store_scope_li4: "Betalning via Medusas betalleverantörer: Stripe, lokala metoder enligt överenskommelse per butik.",
+  store_scope_li5:
+    "Flytt från WooCommerce, Magento eller egenutvecklat: produkter, kunder, orderhistorik, gamla URL:er omdirigerade.",
+  store_pkg1_step: "01 · LANSERING",
+  store_pkg1_name: "INGEN WEBBSHOP",
+  store_pkg1_text: "Katalog, kassa, go-live. Avgränsat utifrån er produktlista.",
+  store_pkg2_step: "02 · FLYTT",
+  store_pkg2_name: "SEG BUTIK",
+  store_pkg2_text: "Samma produkter, ny motor, gamla URL:er kvar. Parallell körning före cut-over.",
+  store_pkg3_step: "03 · DRIFT",
+  store_pkg3_name: "HÅLL DEN SNABB",
+  store_pkg3_text: "Edge Ops plus Medusa-underhåll: uppdateringar, övervakning, avtalad incidentberedskap.",
+  store_pkg_note: "Avgränsat och offererat per butik.",
+  store_pkg_btn: "KONTAKTA OSS →",
+  store_contact_h: "BERÄTTA OM|BUTIKEN.",
+  store_contact_intro: "Vad ni säljer, vad butiken körs på i dag (eller inget än) och var det skaver.",
+  store_contact_message: "Berätta om butiken",
+  store_contact_placeholder: "t.ex. WooCommerce, 3 000 produkter, produktsidor tar 3 s på mobil.",
+  form_opt_store: "Headless store",
+  offers_alt: "Ingen webbshop än, eller är plattformen i sig den sega delen?",
+  offers_alt_link: "DET ANDRA SPÅRET: HEADLESS STORE →",
   meta_title: "Segt API. Snabb edge. | 3DreamLab",
   meta_description: "Latensauditer för 990 € och edge-läslager med fast omfattning för sega lagersaldo-, pris- och PIM-API:er. För byråer och B2B-team.",
   lang_switch_label: "Språk",
@@ -353,6 +523,28 @@ export function t(locale: string | undefined): Strings {
 /** Path of the home page in a locale ('/' for the default). */
 export function homePath(locale: Locale): string {
   return locale === 'en' ? '/' : `/${locale}/`;
+}
+
+/** Drop locale prefix; always returns a trailing slash (except '/'). */
+export function stripLocale(pathname: string): string {
+  let p = pathname.startsWith('/') ? pathname : `/${pathname}`;
+  if (p === '/') return '/';
+  const m = p.match(/^\/(fi|sv)(?=\/|$)/);
+  if (m) {
+    const rest = p.slice(m[0].length);
+    if (!rest || rest === '/') return '/';
+    const path = rest.startsWith('/') ? rest : `/${rest}`;
+    return path.endsWith('/') ? path : `${path}/`;
+  }
+  return p.endsWith('/') ? p : `${p}/`;
+}
+
+/** Locale-prefixed path for a stripped route ('/' → home). */
+export function localePath(locale: Locale, path: string): string {
+  const stripped = stripLocale(path);
+  if (stripped === '/') return homePath(locale);
+  if (locale === 'en') return stripped;
+  return `/${locale}${stripped}`;
 }
 
 /** Headings use "|" for forced line breaks; \u00AD soft hyphens break long words only when they don't fit. */

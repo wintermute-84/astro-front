@@ -1,0 +1,40 @@
+---
+import BaseHead from './BaseHead.astro';
+import Nav from './Nav.astro';
+import Store from './sections/Store.astro';
+import Contact from './sections/Contact.astro';
+import Footer from './Footer.astro';
+import { t } from '../i18n';
+
+const s = t(Astro.currentLocale);
+---
+
+<!doctype html>
+<html lang={s.html_lang}>
+  <head>
+    <BaseHead title={s.store_meta_title} description={s.store_meta_description} />
+  </head>
+  <body>
+    <noscript>
+      <style>.reveal { opacity: 1 !important; transform: none !important; }</style>
+    </noscript>
+    <Nav />
+    <main>
+      <Store />
+      <Contact
+        defaultOffer="store"
+        strings={{
+          contact_h: s.store_contact_h,
+          contact_intro: s.store_contact_intro,
+          form_message: s.store_contact_message,
+          form_placeholder: s.store_contact_placeholder,
+        }}
+      />
+    </main>
+    <Footer />
+    <script>
+      import { initReveal } from '../scripts/reveal.ts';
+      initReveal();
+    </script>
+  </body>
+</html>

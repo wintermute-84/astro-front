@@ -1,6 +1,7 @@
 ---
-import { t, lines } from '../../i18n';
+import { t, lines, localePath, type Locale } from '../../i18n';
 
+const locale = (Astro.currentLocale ?? 'en') as Locale;
 const s = t(Astro.currentLocale);
 const next = [
   { step: s.build_step, name: s.build_name_h, price: s.build_price, text: s.build_text },
@@ -43,5 +44,17 @@ const next = [
         </div>
       ))}
     </div>
+
+    <p class="body-text offers-alt reveal">
+      {s.offers_alt}{' '}
+      <a href={localePath(locale, '/store/')} class="link">{s.offers_alt_link}</a>
+    </p>
   </div>
 </section>
+
+<style>
+  .offers-alt {
+    margin-top: 2.5rem;
+    max-width: 42rem;
+  }
+</style>

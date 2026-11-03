@@ -1,7 +1,21 @@
 ---
-import { t, lines } from '../../i18n';
+import { t, lines, type Strings } from '../../i18n';
 
-const s = t(Astro.currentLocale);
+interface Props {
+  defaultOffer?: 'audit' | 'build' | 'ops' | 'agency' | 'store';
+  strings?: Pick<Strings, 'contact_h' | 'contact_intro' | 'form_message' | 'form_placeholder'>;
+}
+
+const { defaultOffer, strings: stringOverrides } = Astro.props;
+const base = t(Astro.currentLocale);
+const s = { ...base, ...stringOverrides };
+const offers = [
+  { value: 'audit', label: base.form_opt_audit },
+  { value: 'build', label: base.form_opt_build },
+  { value: 'ops', label: base.form_opt_ops },
+  { value: 'agency', label: base.form_opt_agency },
+  { value: 'store', label: base.form_opt_store },
+] as const;
 ---
 
 <section class="section section--contact" id="contact">
@@ -26,10 +40,9 @@ const s = t(Astro.currentLocale);
       <div class="field">
         <label for="offer">{s.form_offer}</label>
         <select id="offer" name="offer">
-          <option value="audit">{s.form_opt_audit}</option>
-          <option value="build">{s.form_opt_build}</option>
-          <option value="ops">{s.form_opt_ops}</option>
-          <option value="agency">{s.form_opt_agency}</option>
+          {offers.map((o) => (
+            <option value={o.value} selected={defaultOffer === o.value}>{o.label}</option>
+          ))}
         </select>
       </div>
 
